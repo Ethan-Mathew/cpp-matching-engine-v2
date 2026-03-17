@@ -6,7 +6,7 @@
 
 #include <cassert>
 
-struct alignas(64) Order
+struct Order
 {
     Order* next_ = nullptr;
     Order* prev_ = nullptr;
@@ -28,5 +28,3 @@ struct alignas(64) Order
     {
     }
 };
-
-static_assert(alignof(Order) == 64);
