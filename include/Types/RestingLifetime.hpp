@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-enum class RestingOrderPolicy : std::uint8_t
+enum class RestingLifetime : std::uint8_t
 {
     GTC,
     DAY
