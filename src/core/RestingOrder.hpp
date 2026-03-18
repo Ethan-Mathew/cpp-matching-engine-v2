@@ -29,6 +29,9 @@ struct RestingOrder
         , lifetime_{lifetime}
     {
     }
+
+    RestingOrder(const RestingOrder&) = delete;
+    RestingOrder& operator=(const RestingOrder&) = delete;
 };
 
 } // namespace lob::core
