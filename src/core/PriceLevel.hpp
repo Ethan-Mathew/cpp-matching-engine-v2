@@ -4,6 +4,9 @@
 
 #include <cstdint>
 
+namespace lob::core
+{
+
 struct RestingOrder;
 
 class PriceLevel
@@ -32,3 +35,5 @@ private:
     lob::Volume totalVolume_  = 0;
     std::uint32_t orderCount_ = 0;
 };
+
+} // namespace lob::core

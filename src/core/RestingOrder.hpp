@@ -1,10 +1,15 @@
 #pragma once
 
-#include "Aliases.hpp"
-#include "OrderType.hpp"
-#include "PriceLevel.hpp"
+#include "lob/Aliases.hpp"
+#include "lob/OrderType.hpp"
+#include "lob/Side.hpp"
+
 #include "RestingLifetime.hpp"
-#include "Side.hpp"
+
+namespace lob::core
+{
+
+class PriceLevel;
 
 struct RestingOrder
 {
@@ -12,16 +17,18 @@ struct RestingOrder
     RestingOrder* prev_ = nullptr;
     PriceLevel* level_  = nullptr;
 
-    OrderID id_;
-    Quantity quantity_;
+    lob::OrderID id_;
+    lob::Quantity quantity_;
     RestingLifetime lifetime_;
 
     RestingOrder() = delete;
 
-    RestingOrder(OrderID id, Quantity quantity, RestingLifetime lifetime)
+    RestingOrder(lob::OrderID id, lob::Quantity quantity, RestingLifetime lifetime)
         : id_{id}
         , quantity_{quantity}
         , lifetime_{lifetime}
     {
     }
 };
+
+} // namespace lob::core
