@@ -13,4 +13,3 @@ My second attempt building a single-threaded limit order book structure with int
 > ## Talks/Texts Used
 >
 > - Nasdaq TotalView-ITCH 5.0 - <https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHSpecification.pdf>
-> - David Gross - CppCon 2024 - <https://www.youtube.com/watch?v=sX2nF1fW7kI&t=1050s>
