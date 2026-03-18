@@ -5,6 +5,9 @@
 #include "Side.hpp"
 #include "TimeInForce.hpp"
 
+namespace lob
+{
+
 struct IncomingOrder
 {
     OrderID id_;
@@ -26,3 +29,5 @@ struct IncomingOrder
     {
     }
 };
+
+} // namespace lob

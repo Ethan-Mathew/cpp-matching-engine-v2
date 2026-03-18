@@ -2,6 +2,9 @@
 
 #include <cstdint>
 
+namespace lob
+{
+
 enum class TimeInForce : std::uint8_t
 {
     DAY,
@@ -9,3 +12,5 @@ enum class TimeInForce : std::uint8_t
     FOK,
     GTC
 };
+
+} // namespace lob
