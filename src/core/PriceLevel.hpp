@@ -2,12 +2,18 @@
 
 #include "lob/Aliases.hpp"
 
+#include "RestingOrder.hpp"
+
 #include <cstdint>
 
 namespace lob::core
 {
 
-struct RestingOrder;
+enum class RemoveOrderResult : std::uint8_t
+{
+    EMPTY,
+    NON_EMPTY
+};
 
 class PriceLevel
 {
@@ -17,8 +23,11 @@ public:
     explicit PriceLevel(lob::Price price);
 
     void push_back(RestingOrder* newOrder);
+
     RestingOrder* pop_front();
-    bool remove_order(RestingOrder* order);
+
+    //[[nodiscard("Resultant state of price level after removal should be used.")]]
+    RemoveOrderResult remove_order(RestingOrder* order);
 
     RestingOrder* front();
     const RestingOrder* front() const;

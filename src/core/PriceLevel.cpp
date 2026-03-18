@@ -1,11 +1,11 @@
-#include "lob/Aliases.hpp"
-
 #include "PriceLevel.hpp"
 #include "RestingOrder.hpp"
 
+#include <cassert>
 #include <cstdint>
 
-using namespace lob::core;
+namespace lob::core
+{
 
 PriceLevel::PriceLevel(lob::Price price)
     : price_{price}
@@ -25,6 +25,7 @@ void PriceLevel::push_back(RestingOrder* newOrder)
     }
 
     tail_ = newOrder;
+    newOrder->next_ = nullptr;
     newOrder->level_ = this;
 
     totalVolume_ += newOrder->quantity_;
@@ -33,7 +34,10 @@ void PriceLevel::push_back(RestingOrder* newOrder)
 
 RestingOrder* PriceLevel::pop_front()
 {
-    if (!head_) return nullptr; 
+    if (!head_)
+    {
+        return nullptr; 
+    }
 
     RestingOrder* retOrder = head_;
 
@@ -49,6 +53,8 @@ RestingOrder* PriceLevel::pop_front()
     }
 
     retOrder->next_ = nullptr;
+    retOrder->prev_ = nullptr;
+    retOrder->level_ = nullptr;
 
     totalVolume_ -= retOrder->quantity_;
     orderCount_--;
@@ -56,40 +62,41 @@ RestingOrder* PriceLevel::pop_front()
     return retOrder;
 }
 
-bool PriceLevel::remove_order(RestingOrder* order)
+RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
 {
-    if (order == head_)
+    assert(head_);
+    assert(order);
+    assert(order->level_ == this);
+
+    RestingOrder* prev = order->prev_;
+    RestingOrder* next = order->next_;
+
+    if (prev)
     {
-        head_ = order->next_;
-        head_->prev_ = nullptr;
-        
-        order->next_ = nullptr;
-    }
-    else if (order == tail_)
-    {
-        tail_ = order->prev_;
-        tail_->next_ = nullptr;
-        
-        order->prev_ = nullptr;
+        prev->next_ = next;
     }
     else
     {
-        RestingOrder* prev = order->prev_;
-        RestingOrder* next = order->next_;
-        
-        prev->next_ = next;
-        next->prev_ = prev;
-
-        order->next_ = nullptr;
-        order->prev_ = nullptr;
+        head_ = next;
     }
 
+    if (next)
+    {
+        next->prev_ = prev;
+    }
+    else
+    {
+        tail_ = prev;
+    }
+
+    order->next_ = nullptr;
+    order->prev_ = nullptr;
     order->level_ = nullptr;
 
     totalVolume_ -= order->quantity_;
     orderCount_--;
 
-    return true;
+    return empty() ? RemoveOrderResult::EMPTY : RemoveOrderResult::NON_EMPTY;
 }
 
 RestingOrder* PriceLevel::front()
@@ -99,7 +106,7 @@ RestingOrder* PriceLevel::front()
 
 const RestingOrder* PriceLevel::front() const
 {
-    return front();
+    return head_;
 }
 
 bool PriceLevel::empty() const
@@ -116,3 +123,5 @@ std::uint32_t PriceLevel::get_order_count() const
 {
     return orderCount_;
 }
+
+} // namespace lob::core
