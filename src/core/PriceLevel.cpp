@@ -1,3 +1,5 @@
+#include "lob/Aliases.hpp"
+
 #include "PriceLevel.hpp"
 #include "RestingOrder.hpp"
 
