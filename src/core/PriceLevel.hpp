@@ -17,8 +17,8 @@ public:
     explicit PriceLevel(lob::Price price);
 
     void push_back(RestingOrder* newOrder);
-    bool remove_order(RestingOrder* order);
     RestingOrder* pop_front();
+    bool remove_order(RestingOrder* order);
 
     RestingOrder* front();
     const RestingOrder* front() const;
