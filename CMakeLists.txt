@@ -5,8 +5,16 @@ project(CppMatchingEngine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(Main ./main.cpp)
+
+#add_executable(Main ./main.cpp)
 
 add_subdirectory(src)
 
-target_link_libraries(Main PRIVATE OrderBook)
+#target_link_libraries(Main PRIVATE OrderBook)
+
+#add_subdirectory(tests)
+
+include(CTest)
+if(BUILD_TESTING)
+    add_subdirectory(tests)
+endif()

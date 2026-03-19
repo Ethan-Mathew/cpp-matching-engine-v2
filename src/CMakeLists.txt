@@ -1,7 +1,11 @@
-add_library(OrderBook Orderbook.cpp)
+add_library(OrderBook
+    Orderbook.cpp
+    core/PriceLevel.cpp
+)
 
-add_subdirectory(core)
+target_include_directories(OrderBook
+    PUBLIC
+        ${PROJECT_SOURCE_DIR}/include
+)
 
-target_include_directories(OrderBook PUBLIC include)
-
-target_link_libraries(OrderBook PRIVATE core)
+target_compile_features(OrderBook PUBLIC cxx_std_20)
