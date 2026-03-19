@@ -10,6 +10,10 @@ My second attempt building a single-threaded limit order book structure with int
 - [ ] Memory pool expansion
 - [ ] Compatibility with Nasdaq Totalview ITCH 5.0 input data
 
+## Temporary Build Command
+
+cmake -B build -DCMAKE_TLS_VERIFY=0
+
 > ## Talks/Texts Used
 >
 > - Nasdaq TotalView-ITCH 5.0 - <https://www.nasdaqtrader.com/content/technicalsupport/specifications/dataproducts/NQTVITCHSpecification.pdf>
