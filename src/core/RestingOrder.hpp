@@ -32,6 +32,11 @@ struct RestingOrder
 
     RestingOrder(const RestingOrder&) = delete;
     RestingOrder& operator=(const RestingOrder&) = delete;
+
+    bool empty() const
+    {
+        return quantity_ == 0;
+    }
 };
 
 } // namespace lob::core
