@@ -29,19 +29,22 @@ public:
     //[[nodiscard("Resultant state of price level after removal should be used.")]]
     RemoveOrderResult remove_order(RestingOrder* order);
 
+    void take_shares(Quantity sharesTaken);
+    void take_all_shares();
+
     RestingOrder* front();
     const RestingOrder* front() const;
     bool empty() const;
 
-    lob::Volume get_total_volume() const;
+    Volume get_total_volume() const;
     std::uint32_t get_order_count() const;
 
 private:
     RestingOrder* head_ = nullptr;
     RestingOrder* tail_ = nullptr;
     
-    lob::Price price_;
-    lob::Volume totalVolume_  = 0;
+    Price price_;
+    Volume totalVolume_  = 0;
     std::uint32_t orderCount_ = 0;
 };
 
