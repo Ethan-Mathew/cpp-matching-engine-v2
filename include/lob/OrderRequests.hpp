@@ -26,6 +26,11 @@ struct LimitOrderRequest
         , tif_{tif}
     {
     }
+
+    bool empty() const
+    {
+        return quantity_ == 0;
+    }
 };
 
 struct MarketOrderRequest
@@ -41,6 +46,11 @@ struct MarketOrderRequest
         , quantity_{quantity}
         , side_{side}
     {
+    }
+
+    bool empty() const
+    {
+        return quantity_ == 0;
     }
 };
 
