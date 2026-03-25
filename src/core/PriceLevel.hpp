@@ -9,15 +9,16 @@
 namespace lob::core
 {
 
-enum class RemoveOrderResult : std::uint8_t
-{
-    EMPTY,
-    NON_EMPTY
-};
-
 class PriceLevel
 {
 public:
+
+    enum class RemoveOrderResult : std::uint8_t
+    {
+        EMPTY,
+        NON_EMPTY
+    };
+
     PriceLevel() = delete;
 
     explicit PriceLevel(lob::Price price);
@@ -40,6 +41,7 @@ public:
     std::uint32_t get_order_count() const;
 
 private:
+
     RestingOrder* head_ = nullptr;
     RestingOrder* tail_ = nullptr;
     
