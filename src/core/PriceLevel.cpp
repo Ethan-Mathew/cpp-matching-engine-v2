@@ -64,7 +64,7 @@ RestingOrder* PriceLevel::pop_front()
     return retOrder;
 }
 
-RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
+PriceLevel::RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
 {
     assert(head_);
     assert(order);
