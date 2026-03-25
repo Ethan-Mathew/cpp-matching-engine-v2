@@ -101,6 +101,18 @@ RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
     return empty() ? RemoveOrderResult::EMPTY : RemoveOrderResult::NON_EMPTY;
 }
 
+void PriceLevel::take_shares(Quantity sharesTaken)
+{
+    head_->quantity_ -= sharesTaken;
+    totalVolume_ -= sharesTaken;
+}
+
+void PriceLevel::take_all_shares()
+{
+    totalVolume_ -= head_->quantity_;
+    head_->quantity_ = 0;
+}
+
 RestingOrder* PriceLevel::front()
 {
     return head_;
