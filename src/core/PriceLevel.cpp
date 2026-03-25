@@ -101,13 +101,13 @@ PriceLevel::RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
     return empty() ? RemoveOrderResult::EMPTY : RemoveOrderResult::NON_EMPTY;
 }
 
-void PriceLevel::take_shares(Quantity sharesTaken)
+void PriceLevel::take_shares_from_first(Quantity sharesTaken)
 {
     head_->quantity_ -= sharesTaken;
     totalVolume_ -= sharesTaken;
 }
 
-void PriceLevel::take_all_shares()
+void PriceLevel::take_all_shares_from_first()
 {
     totalVolume_ -= head_->quantity_;
     head_->quantity_ = 0;

@@ -30,8 +30,8 @@ public:
     //[[nodiscard("Resultant state of price level after removal should be used.")]]
     RemoveOrderResult remove_order(RestingOrder* order);
 
-    void take_shares(Quantity sharesTaken);
-    void take_all_shares();
+    void take_shares_from_first(Quantity sharesTaken);
+    void take_all_shares_from_first();
 
     RestingOrder* front();
     const RestingOrder* front() const;
