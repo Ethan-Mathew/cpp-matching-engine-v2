@@ -132,9 +132,9 @@ TEST_F(PriceLevelTest, RemoveOnlyOrder)
     
     pl_.push_back(&order1);
 
-    RemoveOrderResult removeResult1 = pl_.remove_order(&order1);
+    auto removeResult1 = pl_.remove_order(&order1);
 
-    ASSERT_EQ(removeResult1, RemoveOrderResult::EMPTY);
+    ASSERT_EQ(removeResult1, PriceLevel::RemoveOrderResult::EMPTY);
 
     EXPECT_EQ(order1.next_, nullptr);
     EXPECT_EQ(order1.prev_, nullptr);
@@ -155,9 +155,9 @@ TEST_F(PriceLevelTest, RemoveHeadOrder)
     pl_.push_back(&order2);
     pl_.push_back(&order3);
 
-    RemoveOrderResult removeResult1 = pl_.remove_order(&order1);
+    auto removeResult1 = pl_.remove_order(&order1);
 
-    ASSERT_EQ(removeResult1, RemoveOrderResult::NON_EMPTY);
+    ASSERT_EQ(removeResult1, PriceLevel::RemoveOrderResult::NON_EMPTY);
 
     EXPECT_EQ(order1.next_, nullptr);
     EXPECT_EQ(order1.prev_, nullptr);
@@ -178,9 +178,9 @@ TEST_F(PriceLevelTest, RemoveTailOrder)
     pl_.push_back(&order2);
     pl_.push_back(&order3);
 
-    RemoveOrderResult removeResult1 = pl_.remove_order(&order3);
+    auto removeResult1 = pl_.remove_order(&order3);
 
-    ASSERT_EQ(removeResult1, RemoveOrderResult::NON_EMPTY);
+    ASSERT_EQ(removeResult1, PriceLevel::RemoveOrderResult::NON_EMPTY);
 
     EXPECT_EQ(order3.next_, nullptr);
     EXPECT_EQ(order3.prev_, nullptr);
@@ -201,9 +201,9 @@ TEST_F(PriceLevelTest, RemoveMiddleOrder)
     pl_.push_back(&order2);
     pl_.push_back(&order3);
 
-    RemoveOrderResult removeResult1 = pl_.remove_order(&order2);
+    auto removeResult1 = pl_.remove_order(&order2);
 
-    ASSERT_EQ(removeResult1, RemoveOrderResult::NON_EMPTY);
+    ASSERT_EQ(removeResult1, PriceLevel::RemoveOrderResult::NON_EMPTY);
 
     EXPECT_EQ(order2.next_, nullptr);
     EXPECT_EQ(order2.prev_, nullptr);
@@ -224,17 +224,17 @@ TEST_F(PriceLevelTest, MixedOrderRemovals)
     pl_.push_back(&order2);
     pl_.push_back(&order3);
 
-    RemoveOrderResult removeResult1 = pl_.remove_order(&order2);
+    auto removeResult1 = pl_.remove_order(&order2);
 
-    ASSERT_EQ(removeResult1, RemoveOrderResult::NON_EMPTY);
+    ASSERT_EQ(removeResult1, PriceLevel::RemoveOrderResult::NON_EMPTY);
 
     ASSERT_EQ(pl_.front(), &order1);
     
     pl_.pop_front();
 
-    RemoveOrderResult removeResult2 = pl_.remove_order(&order3);
+    auto removeResult2 = pl_.remove_order(&order3);
 
-    ASSERT_EQ(removeResult2, RemoveOrderResult::EMPTY);
+    ASSERT_EQ(removeResult2, PriceLevel::RemoveOrderResult::EMPTY);
 
     ASSERT_EQ(pl_.front(), nullptr);
     EXPECT_EQ(pl_.get_order_count(), 0);
