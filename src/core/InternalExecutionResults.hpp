@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace lob
+namespace lob::core
 {
 
 enum class SubmitStatus : std::uint8_t
@@ -44,4 +44,4 @@ struct SubmissionResult
     std::vector<ExecutionResult> executions_;
 };
 
-} // namespace lob
+} // namespace lob::core
