@@ -4,7 +4,7 @@
 
 #include "core/PriceLevel.hpp"
 #include "core/RestingOrder.hpp"
-#include "core/InternalExecutionResults.hpp"
+//#include "core/InternalExecutionResults.hpp"
 
 #include <functional>
 #include <map>
@@ -60,7 +60,7 @@ template<Side S>
 void OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
     Quantity remainingShares = limitRequest.quantity_;
-    std::vector<core::ExecutionResult> executedOrders;
+    std::vector<ExecutionResult> executedOrders;
     
     if constexpr (S == Side::BUY)
     {

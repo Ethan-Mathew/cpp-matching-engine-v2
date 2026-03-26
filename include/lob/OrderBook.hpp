@@ -15,6 +15,14 @@ namespace lob
 class OrderBook
 {
 public:
+
+    struct ExecutionResult
+    {
+        OrderID touchedOrderID_;
+        Price touchedPrice;
+        Quantity touchedQuantity;
+    };
+
     OrderBook() = default;
 
     void submit_limit_order(const LimitOrderRequest& limitRequest);

@@ -29,13 +29,6 @@ enum class ModificationResult : std::uint8_t
     MODIFIED
 };
 
-struct ExecutionResult
-{
-    OrderID touchedOrderID_;
-    Price touchedPrice;
-    Quantity touchedQuantity;
-};
-
 struct SubmissionResult
 {
     Quantity quantityFilled_;
