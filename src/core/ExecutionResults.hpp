@@ -12,7 +12,7 @@ namespace lob::core
 enum class SubmitStatus : std::uint8_t
 {
     FILLED,
-    PARTIALLY_FILLED,
+    PARTIALLY_FILLED_RESTING,
     REJECTED,
     RESTING,
     CANCELED
@@ -32,8 +32,8 @@ enum class ModificationResult : std::uint8_t
 
 struct SubmissionResult
 {
-    Quantity quantityFilled_;
-    Quantity quantityRemaining_;
+    Quantity quantityRequested_ = 0;
+    Quantity quantityFilled_    = 0;
     SubmitStatus status_;
     std::vector<OrderBook::ExecutionResult> executions_;
 };
