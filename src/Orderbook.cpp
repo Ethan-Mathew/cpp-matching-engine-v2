@@ -60,7 +60,7 @@ template<Side S>
 core::SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
     Quantity remainingShares = limitRequest.quantity_;
-    std::vector<ExecutionResult> executedOrders;
+    core::SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
     
     if constexpr (S == Side::BUY)
     {
@@ -71,23 +71,34 @@ core::SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderReq
             if (crosses<Side::BUY>(limitRequest.price_, topOfAsks->first))
             {
                 core::PriceLevel& matchingLevel = topOfAsks->second;
+
                 core::RestingOrder* takingOrder = matchingLevel.front();
+                assert(takingOrder != nullptr);
 
                 if (takingOrder->quantity_ > remainingShares)
                 {
-                    executedOrders.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
                     matchingLevel.take_shares_from_first(remainingShares);
-                    remainingShares = 0;
+
+                    subResult.quantityFilled_ += remainingShares;
+                    subResult.status_ = core::SubmitStatus::FILLED;
+
+                    return subResult;
                 }
                 else
                 {
                     remainingShares -= takingOrder->quantity_;
-                    executedOrders.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
+            
+                    subResult.quantityFilled_ += takingOrder->quantity_;
+
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
                     matchingLevel.take_all_shares_from_first();
                     idToOrderMap.erase(takingOrder->id_);
-
-                    // deallocate below order with memory pool API
-                    matchingLevel.pop_front();
+                    
+                    //
+                    // TODO: deallocate below order with memory pool API
+                    // 
+                    core::RestingOrder* poppedOrder = matchingLevel.pop_front();
 
                     if (matchingLevel.empty())
                     {
@@ -101,12 +112,21 @@ core::SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderReq
             }
         }
 
-        if (remainingShares > 0)
+        if (remainingShares == 0)
         {
-            // rest the remaining
-            // need to create a new price level
+            subResult.status_ = core::SubmitStatus::FILLED;
+        }
+        else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
+        {
+            subResult.status_ = core::SubmitStatus::PARTIALLY_FILLED_RESTING;
+        }
+        else
+        {
+            subResult.status_ = core::SubmitStatus::RESTING;
         }
     }
+
+    return subResult;
 }
 
 void submit_limit_order_fok();
