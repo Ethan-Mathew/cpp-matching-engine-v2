@@ -1,4 +1,5 @@
 #include "Aliases.hpp"
+#include "ExecutionResults.hpp"
 #include "OrderRequests.hpp"
 #include "PriceLevel.hpp"
 #include "RestingOrder.hpp"
@@ -25,7 +26,7 @@ public:
 
     OrderBook() = default;
 
-    void submit_limit_order(const LimitOrderRequest& limitRequest);
+    core::SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
     void submit_market_order();
     void modify_order();
     void cancel_order();
@@ -37,8 +38,9 @@ private:
 
     void submit_limit_order_fok();
     void submit_limit_order_ioc();
+
     template<Side S>
-    void submit_limit_order_resting(const LimitOrderRequest& limitRequest);
+    core::SubmissionResult submit_limit_order_resting(const LimitOrderRequest& limitRequest);
   
     std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap;
     std::map<Price, lob::core::PriceLevel, std::greater<Price>> bidLevels_;

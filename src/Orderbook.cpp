@@ -2,9 +2,9 @@
 #include "lob/OrderBook.hpp"
 #include "lob/TimeInForce.hpp"
 
+#include "core/ExecutionResults.hpp"
 #include "core/PriceLevel.hpp"
 #include "core/RestingOrder.hpp"
-//#include "core/InternalExecutionResults.hpp"
 
 #include <functional>
 #include <map>
@@ -37,7 +37,7 @@ bool crosses(Price orderPrice, Price levelPrice)
     }
 }
 
-void OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
+core::SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
 {
     switch(limitRequest.tif_)
     {
@@ -57,7 +57,7 @@ void OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
 }
 
 template<Side S>
-void OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
+core::SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
     Quantity remainingShares = limitRequest.quantity_;
     std::vector<ExecutionResult> executedOrders;
