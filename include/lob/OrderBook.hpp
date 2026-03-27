@@ -18,9 +18,9 @@ public:
 
     struct ExecutionResult
     {
-        OrderID touchedOrderID_;
-        Price touchedPrice;
-        Quantity touchedQuantity;
+        OrderID makerOrderID_;
+        Price makerPrice;
+        Quantity executedQuantity;
     };
 
     OrderBook() = default;
