@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Aliases.hpp"
+#include "OrderBook.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -10,11 +11,11 @@ namespace lob::core
 
 enum class SubmitStatus : std::uint8_t
 {
-    REJECTED,
+    FILLED,
     PARTIALLY_FILLED,
-    CANCELLED_REMAINDER,
+    REJECTED,
     RESTING,
-    FILLED
+    CANCELED
 };
 
 enum class CancelResult : std::uint8_t
@@ -34,7 +35,7 @@ struct SubmissionResult
     Quantity quantityFilled_;
     Quantity quantityRemaining_;
     SubmitStatus status_;
-    std::vector<ExecutionResult> executions_;
+    std::vector<OrderBook::ExecutionResult> executions_;
 };
 
 } // namespace lob::core
