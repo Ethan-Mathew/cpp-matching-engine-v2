@@ -36,6 +36,11 @@ struct SubmissionResult
     Quantity quantityFilled_    = 0;
     SubmitStatus status_;
     std::vector<OrderBook::ExecutionResult> executions_;
+
+    Quantity get_quantity_remaining() const
+    {
+        return quantityRequested_ - quantityFilled_;
+    }
 };
 
 } // namespace lob::core
