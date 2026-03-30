@@ -15,15 +15,6 @@
 namespace lob
 {
 
-/*
-    OrderID id_;
-    Price price_;
-    Quantity quantity_;
-    Side side_;
-    TimeInForce tif_;
-
-*/
-
 template<Side S>
 bool crosses(Price orderPrice, Price levelPrice)
 {
@@ -103,6 +94,69 @@ core::SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderReq
                     if (matchingLevel.empty())
                     {
                         askLevels_.erase(topOfAsks);
+                    }
+                }
+            }
+            else 
+            {
+                break;
+            }
+        }
+
+        if (remainingShares == 0)
+        {
+            subResult.status_ = core::SubmitStatus::FILLED;
+        }
+        else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
+        {
+            subResult.status_ = core::SubmitStatus::PARTIALLY_FILLED_RESTING;
+        }
+        else
+        {
+            subResult.status_ = core::SubmitStatus::RESTING;
+        }
+    }
+    else
+    {
+        while (remainingShares > 0 && !bidLevels_.empty())
+        {
+            auto topOfBids = bidLevels_.begin();
+
+            if (crosses<Side::SELL>(limitRequest.price_, topOfBids->first))
+            {
+                core::PriceLevel& matchingLevel = topOfBids->second;
+
+                core::RestingOrder* takingOrder = matchingLevel.front();
+                assert(takingOrder != nullptr);
+
+                if (takingOrder->quantity_ > remainingShares)
+                {
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, remainingShares);
+                    matchingLevel.take_shares_from_first(remainingShares);
+
+                    subResult.quantityFilled_ += remainingShares;
+                    subResult.status_ = core::SubmitStatus::FILLED;
+
+                    return subResult;
+                }
+                else
+                {
+                    remainingShares -= takingOrder->quantity_;
+            
+                    subResult.quantityFilled_ += takingOrder->quantity_;
+
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
+                    matchingLevel.take_all_shares_from_first();
+                    idToOrderMap.erase(takingOrder->id_);
+                    
+                    //
+                    // TODO: deallocate below order with memory pool API
+                    // 
+                    core::RestingOrder* poppedOrder = matchingLevel.pop_front();
+
+                    if (matchingLevel.empty())
+                    {
+                        bidLevels_.erase(topOfBids);
                     }
                 }
             }
