@@ -1,10 +1,14 @@
 #pragma once
 
-#include "Order.hpp"
+#include "RestingOrder.hpp"
 
 #include <cstddef>
-#include <cstdint>
 #include <memory>
+#include <new>
+#include <vector>
+
+namespace lob::core
+{
 
 class MemoryPool
 {
@@ -17,22 +21,48 @@ public:
     MemoryPool(const MemoryPool&) = delete;
     MemoryPool& operator=(const MemoryPool&) = delete;
 
+    // unsure if I should use parameter pack or just listing the params is fine
     template <typename... Args>
-    void* allocate(Args... args);
+    RestingOrder* allocate(Args&&... args);
+
+    void deallocate(RestingOrder* ptr);
 
 
 private:
     union MemoryBlock;
 
-    std::uint64_t totalElements_;
-    std::uint64_t currentlyAllocated_;
+    MemoryBlock* allocate_slab(std::size_t slabSize);
 
-    MemoryBlock* firstFree_;
-    MemoryBlock* pool_;
+
+    std::size_t totalElements_      = 0;
+    std::size_t currentlyAllocated_ = 0;
+
+    MemoryBlock* firstFree_ = nullptr;
+    MemoryBlock* pool_      = nullptr;
+
+    std::vector<MemoryBlock*> slabs_;
 };
 
 union MemoryPool::MemoryBlock
 {
-    alignas(Order) std::byte order_[sizeof(Order)];
-    MemoryBlock* next_;
+    alignas(RestingOrder) std::byte order_[sizeof(RestingOrder)];
+    MemoryBlock* next_ = nullptr;
 };
+
+MemoryPool::MemoryBlock* MemoryPool::allocate_slab(std::size_t slabSize)
+{
+    MemoryBlock* firstInSlab = static_cast<MemoryBlock*>(::operator new((slabSize * sizeof(MemoryBlock)),
+                                                         std::align_val_t(alignof(RestingOrder))));
+
+    std::size_t indexOfLastBlock = slabSize - 1;
+    for (std::size_t i{}; i < indexOfLastBlock; i++)
+    {
+        firstInSlab[i].next_ = &firstInSlab[i + 1];
+    }
+
+    firstInSlab[indexOfLastBlock].next_ = nullptr;
+
+    return firstInSlab;
+}
+
+} // namespace lob::core
