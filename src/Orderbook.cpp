@@ -29,7 +29,7 @@ bool crosses(Price orderPrice, Price levelPrice)
     }
 }
 
-core::SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
+SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
 {
     switch(limitRequest.tif_)
     {
@@ -49,7 +49,7 @@ core::SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& li
 }
 
 template<Side S>
-core::SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
+SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
     Quantity remainingShares = limitRequest.quantity_;
     core::SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
