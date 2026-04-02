@@ -31,27 +31,6 @@ MemoryPool::~MemoryPool()
     }
 }
 
-template <typename... Args>
-RestingOrder* MemoryPool::allocate(Args&&... args)
-{
-    if (!firstFree_)
-    {
-        MemoryBlock* newSlab = allocate_slab(totalElements_);
-        slabs_.push_back(newSlab);
-
-        firstFree_ = newSlab;
-
-        totalElements_ *= 2;
-    }
-
-    MemoryBlock* ret = firstFree_;
-    firstFree_ = firstFree_->next_;
-
-    currentlyAllocated_++;
-
-    return new (static_cast<void*>(&ret->order_)) RestingOrder(std::forward<Args>(args)...);
-}
-
 void MemoryPool::deallocate(RestingOrder* orderToFree)
 {
     std::destroy_at(orderToFree);
