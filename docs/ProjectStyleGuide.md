@@ -7,9 +7,11 @@ I thought it would be prudent to summarize the style choices made while moving f
 I've been using the following hierarchy to order my library/header inclusions:
 
 1. Inclusion of external libraries
-2. Includes from include/
+2. Includes from include/lob/
 3. Includes from the local directory
-4. Includes from the STL
+4. STL includes
+
+I keep a newline between each for cleanliness.
 
 ## Blocks & Braces
 
@@ -31,10 +33,12 @@ Also for the sake of readability, I tend to camel case where I can. Snake casing
 
 ## Classes & Structs
 
-- Classes receive their public declarations first, then followed by private members.
+- I list data members in structs before all member functions.
+- Classes receive their public declarations first, followed by private members.
 - Member functions (apart from the special member functions) are declared in snake-case.
 
 ## Enumerations
 
 - Enumerated types are in all-caps.
-- I'll prefer scoped enums.
+- Multi-word primitives use an underscore for spacing.
+- I use only scoped enums.
