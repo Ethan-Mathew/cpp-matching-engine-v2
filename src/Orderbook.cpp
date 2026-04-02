@@ -1,5 +1,6 @@
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
+#include "lob/SubmissionResults.hpp"
 #include "lob/TimeInForce.hpp"
 
 #include "core/ExecutionResults.hpp"
