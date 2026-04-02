@@ -33,12 +33,10 @@ private:
 
     MemoryBlock* allocate_slab(std::size_t slabSize);
 
-
     std::size_t totalElements_      = 0;
     std::size_t currentlyAllocated_ = 0;
 
     MemoryBlock* firstFree_ = nullptr;
-    MemoryBlock* pool_      = nullptr;
 
     std::vector<MemoryBlock*> slabs_;
 };
@@ -61,6 +59,8 @@ MemoryPool::MemoryBlock* MemoryPool::allocate_slab(std::size_t slabSize)
     }
 
     firstInSlab[indexOfLastBlock].next_ = nullptr;
+
+    totalElements_ += slabSize;
 
     return firstInSlab;
 }
