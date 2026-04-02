@@ -21,7 +21,6 @@ public:
     MemoryPool(const MemoryPool&) = delete;
     MemoryPool& operator=(const MemoryPool&) = delete;
 
-    // unsure if I should use parameter pack or just listing the params is fine
     template <typename... Args>
     RestingOrder* allocate(Args&&... args);
 
@@ -59,8 +58,6 @@ MemoryPool::MemoryBlock* MemoryPool::allocate_slab(std::size_t slabSize)
     }
 
     firstInSlab[indexOfLastBlock].next_ = nullptr;
-
-    totalElements_ += slabSize;
 
     return firstInSlab;
 }

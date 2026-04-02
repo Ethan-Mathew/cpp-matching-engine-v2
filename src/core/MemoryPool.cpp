@@ -5,7 +5,6 @@
 
 #include <cassert>
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <new>
 #include <utility>
@@ -18,6 +17,10 @@ MemoryPool::MemoryPool(std::size_t size)
 {
     MemoryBlock* newSlab = allocate_slab(size);
     slabs_.push_back(newSlab);
+
+    firstFree_ = newSlab;
+
+    totalElements_ += size;
 }
 
 MemoryPool::~MemoryPool()
@@ -33,9 +36,12 @@ RestingOrder* MemoryPool::allocate(Args&&... args)
 {
     if (!firstFree_)
     {
-        MemoryBlock* newSlab = allocate_slab(size);
+        MemoryBlock* newSlab = allocate_slab(totalElements_);
         slabs_.push_back(newSlab);
+
         firstFree_ = newSlab;
+
+        totalElements_ *= 2;
     }
 
     MemoryBlock* ret = firstFree_;
