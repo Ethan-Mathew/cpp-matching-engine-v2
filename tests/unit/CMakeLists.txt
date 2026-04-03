@@ -1,4 +1,7 @@
-add_executable(UnitTests PriceLevelTests.cpp)
+if (${TestPriceLevel})
+    add_executable(UnitTests PriceLevelTests.cpp)
+elseif (${TestMemoryPool})
+    add_executable(UnitTests MemoryPoolTests.cpp)
 
 target_include_directories(UnitTests
     PRIVATE
