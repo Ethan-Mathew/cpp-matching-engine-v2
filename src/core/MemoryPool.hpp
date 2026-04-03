@@ -25,6 +25,20 @@ public:
 
     void deallocate(RestingOrder* ptr);
 
+    std::size_t get_total_elements() const
+    {
+        return totalElements_;
+    }
+
+    std::size_t get_currently_allocated() const
+    {
+        return currentlyAllocated_;
+    }
+
+    std::size_t get_num_slabs() const
+    {
+        return slabs_.size();
+    }
 
 private:
     union MemoryBlock;
