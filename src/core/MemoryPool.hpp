@@ -3,7 +3,6 @@
 #include "RestingOrder.hpp"
 
 #include <cstddef>
-#include <memory>
 #include <new>
 #include <vector>
 

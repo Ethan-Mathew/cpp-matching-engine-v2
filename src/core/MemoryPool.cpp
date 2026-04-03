@@ -8,6 +8,7 @@
 #include <memory>
 #include <new>
 #include <utility>
+#include <vector>
 
 namespace lob::core
 {
@@ -33,6 +34,8 @@ MemoryPool::~MemoryPool()
 
 void MemoryPool::deallocate(RestingOrder* orderToFree)
 {
+    assert(orderToFree != nullptr);
+
     std::destroy_at(orderToFree);
 
     auto deallocatedOrder = reinterpret_cast<MemoryBlock*>(orderToFree);
