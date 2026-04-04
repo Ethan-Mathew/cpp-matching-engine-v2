@@ -1,9 +1,9 @@
 #include "lob/Aliases.hpp"
+#include "lob/ExecutionResults.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/SubmissionResults.hpp"
 #include "lob/TimeInForce.hpp"
 
-#include "core/ExecutionResults.hpp"
 #include "core/PriceLevel.hpp"
 #include "core/RestingOrder.hpp"
 
@@ -15,6 +15,13 @@
 
 namespace lob
 {
+
+struct Impl
+{
+    std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap;
+    std::map<Price, lob::core::PriceLevel, std::greater<Price>> bidLevels_;
+    std::map<Price, lob::core::PriceLevel, std::less<Price>> askLevels_;
+};
 
 template<Side S>
 bool crosses(Price orderPrice, Price levelPrice)
@@ -45,12 +52,20 @@ SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitReq
         }
     case TimeInForce::IOC:
     case TimeInForce::FOK:
+    default:
+        return SubmissionResult{};
     }
+
+    return SubmissionResult {};
 }
 
 template<Side S>
 SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
+    auto& askLevels = pImpl_->askLevels_;
+    auto& bidLevels = pImpl_->bidLevels_;
+    auto& idToOrderMap = pImpl_->idToOrderMap_;
+
     Quantity remainingShares = limitRequest.quantity_;
     core::SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
     
