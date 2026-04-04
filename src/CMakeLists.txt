@@ -1,6 +1,7 @@
 add_library(OrderBook
     Orderbook.cpp
     core/PriceLevel.cpp
+    core/MemoryPool.cpp
 )
 
 target_include_directories(OrderBook
