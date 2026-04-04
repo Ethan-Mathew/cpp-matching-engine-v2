@@ -80,7 +80,7 @@ RestingOrder* MemoryPool::allocate(Args&&... args)
     return new (static_cast<void*>(&ret->order_)) RestingOrder(std::forward<Args>(args)...);
 }
 
-MemoryPool::MemoryBlock* MemoryPool::allocate_slab(std::size_t slabSize)
+inline MemoryPool::MemoryBlock* MemoryPool::allocate_slab(std::size_t slabSize)
 {
     MemoryBlock* firstInSlab = static_cast<MemoryBlock*>(::operator new((slabSize * sizeof(MemoryBlock)),
                                                          std::align_val_t(alignof(RestingOrder))));
