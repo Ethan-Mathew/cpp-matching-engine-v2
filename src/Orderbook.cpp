@@ -91,7 +91,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
                     matchingLevel.take_shares_from_first(remainingShares);
 
                     subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = core::SubmitStatus::FILLED;
+                    subResult.status_ = SubmitStatus::FILLED;
 
                     return subResult;
                 }
@@ -124,15 +124,15 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
 
         if (remainingShares == 0)
         {
-            subResult.status_ = core::SubmitStatus::FILLED;
+            subResult.status_ = SubmitStatus::FILLED;
         }
         else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
         {
-            subResult.status_ = core::SubmitStatus::PARTIALLY_FILLED_RESTING;
+            subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
         }
         else
         {
-            subResult.status_ = core::SubmitStatus::RESTING;
+            subResult.status_ = SubmitStatus::RESTING;
         }
     }
     else
@@ -154,7 +154,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
                     matchingLevel.take_shares_from_first(remainingShares);
 
                     subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = core::SubmitStatus::FILLED;
+                    subResult.status_ = SubmitStatus::FILLED;
 
                     return subResult;
                 }
@@ -187,15 +187,15 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
 
         if (remainingShares == 0)
         {
-            subResult.status_ = core::SubmitStatus::FILLED;
+            subResult.status_ = SubmitStatus::FILLED;
         }
         else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
         {
-            subResult.status_ = core::SubmitStatus::PARTIALLY_FILLED_RESTING;
+            subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
         }
         else
         {
-            subResult.status_ = core::SubmitStatus::RESTING;
+            subResult.status_ = SubmitStatus::RESTING;
         }
     }
 
