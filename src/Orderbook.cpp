@@ -9,6 +9,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <optional>
 #include <unordered_map>
 #include <vector>
@@ -16,7 +17,7 @@
 namespace lob
 {
 
-struct Impl
+struct OrderBook::Impl
 {
     std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap;
     std::map<Price, lob::core::PriceLevel, std::greater<Price>> bidLevels_;
@@ -62,18 +63,19 @@ SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitReq
 template<Side S>
 SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
-    auto& askLevels = pImpl_->askLevels_;
-    auto& bidLevels = pImpl_->bidLevels_;
-    auto& idToOrderMap = pImpl_->idToOrderMap_;
+    Impl& impl = *pImpl_;
+    auto& askLevels = impl.askLevels_;
+    auto& bidLevels = impl.bidLevels_;
+    auto& idToOrderMap = impl.idToOrderMap;
 
     Quantity remainingShares = limitRequest.quantity_;
-    core::SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
+    SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
     
     if constexpr (S == Side::BUY)
     {
-        while (remainingShares > 0 && !askLevels_.empty())
+        while (remainingShares > 0 && !askLevels.empty())
         {
-            auto topOfAsks = askLevels_.begin();
+            auto topOfAsks = askLevels.begin();
 
             if (crosses<Side::BUY>(limitRequest.price_, topOfAsks->first))
             {
@@ -109,7 +111,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
 
                     if (matchingLevel.empty())
                     {
-                        askLevels_.erase(topOfAsks);
+                        askLevels.erase(topOfAsks);
                     }
                 }
             }
@@ -134,9 +136,9 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
     }
     else
     {
-        while (remainingShares > 0 && !bidLevels_.empty())
+        while (remainingShares > 0 && !bidLevels.empty())
         {
-            auto topOfBids = bidLevels_.begin();
+            auto topOfBids = bidLevels.begin();
 
             if (crosses<Side::SELL>(limitRequest.price_, topOfBids->first))
             {
@@ -172,7 +174,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
 
                     if (matchingLevel.empty())
                     {
-                        bidLevels_.erase(topOfBids);
+                        bidLevels.erase(topOfBids);
                     }
                 }
             }
