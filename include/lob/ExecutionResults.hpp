@@ -1,13 +1,18 @@
 #pragma once
 
-#include "lob/OrderBook.hpp"
 #include "lob/Aliases.hpp"
 
 #include <cstdint>
-#include <vector>
 
 namespace lob
 {
+
+struct ExecutionResult
+{
+    OrderID makerOrderID_;
+    Price makerPrice;
+    Quantity executedQuantity;
+};
 
 enum class CancelResult : std::uint8_t
 {

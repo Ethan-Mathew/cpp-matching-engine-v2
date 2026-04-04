@@ -2,7 +2,6 @@
 
 #include "Aliases.hpp"
 #include "OrderRequests.hpp"
-#include "PriceLevel.hpp"
 #include "SubmissionResults.hpp"
 
 #include <functional>
@@ -15,13 +14,6 @@ namespace lob
 class OrderBook
 {
 public:
-
-    struct ExecutionResult
-    {
-        OrderID makerOrderID_;
-        Price makerPrice;
-        Quantity executedQuantity;
-    };
 
     OrderBook()
         : pImpl_{std::make_unique<Impl>()}
