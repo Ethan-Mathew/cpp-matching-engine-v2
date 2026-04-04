@@ -16,12 +16,10 @@ namespace lob::core
 MemoryPool::MemoryPool(std::size_t size)
     : totalElements_{size}
 {
-    MemoryBlock* newSlab = allocate_slab(size);
+    MemoryBlock* newSlab = MemoryPool::allocate_slab(size);
     slabs_.push_back(newSlab);
 
     firstFree_ = newSlab;
-
-    totalElements_ += size;
 }
 
 MemoryPool::~MemoryPool()
