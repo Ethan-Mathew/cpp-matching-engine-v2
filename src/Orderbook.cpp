@@ -7,6 +7,7 @@
 #include "core/PriceLevel.hpp"
 #include "core/RestingOrder.hpp"
 
+#include <cassert>
 #include <functional>
 #include <map>
 #include <memory>
