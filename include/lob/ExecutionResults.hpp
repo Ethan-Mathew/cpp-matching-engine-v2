@@ -6,7 +6,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace lob::core
+namespace lob
 {
 
 enum class CancelResult : std::uint8_t
@@ -21,4 +21,4 @@ enum class ModificationResult : std::uint8_t
     MODIFIED
 };
 
-} // namespace lob::core
+} // namespace lob
