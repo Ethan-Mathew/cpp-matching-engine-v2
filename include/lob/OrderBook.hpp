@@ -25,7 +25,10 @@ public:
         Quantity executedQuantity;
     };
 
-    OrderBook() = default;
+    OrderBook()
+        : pImpl_{std::make_unique<Impl>()}
+    {
+    }
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
     void submit_market_order();
