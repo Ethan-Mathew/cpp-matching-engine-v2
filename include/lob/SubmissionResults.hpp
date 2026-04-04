@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Aliases.hpp"
-#include "OrderBook.hpp"
+#include "ExecutionResults.hpp"
 
 #include <vector>
 
@@ -22,7 +22,7 @@ struct SubmissionResult
     Quantity quantityRequested_ = 0;
     Quantity quantityFilled_    = 0;
     SubmitStatus status_;
-    std::vector<OrderBook::ExecutionResult> executions_;
+    std::vector<ExecutionResult> executions_;
 
     Quantity get_quantity_remaining() const
     {
