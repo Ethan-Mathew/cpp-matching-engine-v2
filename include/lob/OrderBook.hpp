@@ -1,10 +1,8 @@
 #pragma once
 
 #include "Aliases.hpp"
-#include "ExecutionResults.hpp"
 #include "OrderRequests.hpp"
 #include "PriceLevel.hpp"
-#include "RestingOrder.hpp"
 #include "SubmissionResults.hpp"
 
 #include <functional>
