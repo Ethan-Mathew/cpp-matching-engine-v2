@@ -8,9 +8,8 @@
 #include "SubmissionResults.hpp"
 
 #include <functional>
-#include <map>
+#include <memory>
 #include <optional>
-#include <unordered_map>
 
 namespace lob
 {
@@ -43,10 +42,9 @@ private:
 
     template<Side S>
     SubmissionResult submit_limit_order_resting(const LimitOrderRequest& limitRequest);
-  
-    std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap;
-    std::map<Price, lob::core::PriceLevel, std::greater<Price>> bidLevels_;
-    std::map<Price, lob::core::PriceLevel, std::less<Price>> askLevels_;
+    
+    struct Impl;
+    std::unique_ptr<Impl> pImpl_;
 };
 
 } // namespace lob::core
