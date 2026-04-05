@@ -33,6 +33,8 @@ public:
     void take_shares_from_first(Quantity sharesTaken);
     void take_all_shares_from_first();
 
+    void prune_day_orders();
+
     RestingOrder* front();
     const RestingOrder* front() const;
     bool empty() const;
