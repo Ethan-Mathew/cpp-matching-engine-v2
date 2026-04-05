@@ -37,6 +37,11 @@ struct RestingOrder
     {
         return quantity_ == 0;
     }
+
+    bool operator==(const RestingOrder& compOrder) const
+    {
+        return id_ == compOrder.id_;
+    }
 };
 
 } // namespace lob::core
