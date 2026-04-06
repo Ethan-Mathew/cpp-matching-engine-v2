@@ -31,7 +31,6 @@ public:
     RemoveOrderResult remove_order(RestingOrder* order);
 
     void take_shares_from_first(Quantity sharesTaken);
-    RestingOrder* empty_shares_from_first();
 
     void prune_day_orders();
 

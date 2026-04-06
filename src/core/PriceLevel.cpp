@@ -107,11 +107,6 @@ void PriceLevel::take_shares_from_first(Quantity sharesTaken)
     totalVolume_ -= sharesTaken;
 }
 
-RestingOrder* PriceLevel::empty_shares_from_first()
-{
-    return pop_front();
-}
-
 /*
 void PriceLevel::prune_day_orders()
 {
