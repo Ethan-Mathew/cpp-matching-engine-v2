@@ -109,8 +109,6 @@ void PriceLevel::take_shares_from_first(Quantity sharesTaken)
 
 RestingOrder* PriceLevel::empty_shares_from_first()
 {
-    head_->quantity_ = 0;
-
     return pop_front();
 }
 
