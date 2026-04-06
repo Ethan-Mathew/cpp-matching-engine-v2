@@ -31,7 +31,7 @@ OrderBook::OrderBook(std::size_t poolSize)
 struct OrderBook::Impl
 {
     core::MemoryPool memoryPool_;
-    std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap;
+    std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap_;
     std::map<Price, lob::core::PriceLevel, std::greater<Price>> bidLevels_;
     std::map<Price, lob::core::PriceLevel, std::less<Price>> askLevels_;
 
@@ -56,6 +56,15 @@ bool crosses(Price orderPrice, Price levelPrice)
 
 SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
 {
+    /*
+    auto& idToOrderMap = pImpl_->idToOrderMap_;
+    
+    if (idToOrderMap.find(limitRequest.id_) != idToOrderMap.end())
+    {
+        return SubmissionResult {.status_ = SubmitStatus::REJECTED};
+    }
+    */
+
     switch(limitRequest.tif_)
     {
     case TimeInForce::GTC:
@@ -83,7 +92,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
     Impl& impl = *pImpl_;
     auto& askLevels = impl.askLevels_;
     auto& bidLevels = impl.bidLevels_;
-    auto& idToOrderMap = impl.idToOrderMap;
+    auto& idToOrderMap = impl.idToOrderMap_;
 
     Quantity remainingShares = limitRequest.quantity_;
     SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
@@ -145,7 +154,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
             RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
 
             core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifeTime);
-            impl.idToOrderMap.emplace(limitRequest.id_, newOrder);
+            idToOrderMap.emplace(limitRequest.id_, newOrder);
 
             auto [it, inserted] = bidLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});
             it->second.push_back(newOrder);
@@ -217,7 +226,8 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
             RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
 
             core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime);
-            impl.idToOrderMap.emplace(limitRequest.id_, newOrder);
+            
+            idToOrderMap.emplace(limitRequest.id_, newOrder);
 
             auto [it, inserted] = askLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});
             it->second.push_back(newOrder);
