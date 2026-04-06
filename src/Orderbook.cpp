@@ -7,10 +7,12 @@
 #include "lob/SubmissionResults.hpp"
 #include "lob/TimeInForce.hpp"
 
+#include "core/MemoryPool.hpp"
 #include "core/PriceLevel.hpp"
 #include "core/RestingOrder.hpp"
 
 #include <cassert>
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
@@ -21,11 +23,22 @@
 namespace lob
 {
 
+OrderBook::OrderBook(std::size_t poolSize)
+    : pImpl_{std::make_unique<Impl>(poolSize)}
+{    
+}
+
 struct OrderBook::Impl
 {
+    core::MemoryPool memoryPool_;
     std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap;
     std::map<Price, lob::core::PriceLevel, std::greater<Price>> bidLevels_;
     std::map<Price, lob::core::PriceLevel, std::less<Price>> askLevels_;
+
+    Impl(std::size_t poolSize)
+        : memoryPool_{poolSize}
+    {
+    }
 };
 
 template<Side S>

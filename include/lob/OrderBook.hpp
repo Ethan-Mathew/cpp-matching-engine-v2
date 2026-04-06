@@ -15,10 +15,7 @@ class OrderBook
 {
 public:
 
-    OrderBook()
-        : pImpl_{std::make_unique<Impl>()}
-    {
-    }
+    OrderBook(std::size_t poolSize);
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
     void submit_market_order();
