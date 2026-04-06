@@ -56,14 +56,12 @@ bool crosses(Price orderPrice, Price levelPrice)
 
 SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
 {
-    /*
     auto& idToOrderMap = pImpl_->idToOrderMap_;
     
-    if (idToOrderMap.find(limitRequest.id_) != idToOrderMap.end())
+    if (idToOrderMap.contains(limitRequest.id_))
     {
-        return SubmissionResult {.status_ = SubmitStatus::REJECTED};
+        return SubmissionResult{.quantityRequested_ = limitRequest.quantity_, .status_ = SubmitStatus::REJECTED};
     }
-    */
 
     switch(limitRequest.tif_)
     {
