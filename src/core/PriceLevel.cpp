@@ -107,11 +107,31 @@ void PriceLevel::take_shares_from_first(Quantity sharesTaken)
     totalVolume_ -= sharesTaken;
 }
 
-void PriceLevel::take_all_shares_from_first()
+RestingOrder* PriceLevel::empty_shares_from_first()
 {
-    totalVolume_ -= head_->quantity_;
     head_->quantity_ = 0;
+
+    return pop_front();
 }
+
+/*
+void PriceLevel::prune_day_orders()
+{
+    RestingOrder* ptr = head_;
+
+    while (ptr != nullptr)
+    {
+        if (ptr->lifetime_ == RestingLifetime::DAY)
+        {
+            RestingOrder* temp = ptr;
+            ptr = ptr->next_;
+            remove_order(temp);
+        }
+    }
+
+    
+}
+*/
 
 RestingOrder* PriceLevel::front()
 {
