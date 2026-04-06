@@ -116,15 +116,13 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
                     remainingShares -= takingOrder->quantity_;
             
                     subResult.quantityFilled_ += takingOrder->quantity_;
-
                     subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
-                    matchingLevel.take_all_shares_from_first();
-                    idToOrderMap.erase(takingOrder->id_);
                     
-                    //
-                    // TODO: deallocate below order with memory pool API
-                    // 
-                    core::RestingOrder* poppedOrder = matchingLevel.pop_front();
+                    idToOrderMap.erase(takingOrder->id_);
+
+                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+
+                    impl.memoryPool_.deallocate(clearedOrder);
 
                     if (matchingLevel.empty())
                     {
@@ -142,13 +140,24 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
         {
             subResult.status_ = SubmitStatus::FILLED;
         }
-        else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
-        {
-            subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
-        }
         else
         {
-            subResult.status_ = SubmitStatus::RESTING;
+            RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
+
+            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifeTime);
+            impl.idToOrderMap.emplace(limitRequest.id_, newOrder);
+
+            auto [it, inserted] = bidLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});
+            it->second.push_back(newOrder);
+
+            if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
+            {
+                subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
+            }
+            else
+            {
+                subResult.status_ = SubmitStatus::RESTING;
+            }
         }
     }
     else
@@ -179,15 +188,13 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
                     remainingShares -= takingOrder->quantity_;
             
                     subResult.quantityFilled_ += takingOrder->quantity_;
-
                     subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
-                    matchingLevel.take_all_shares_from_first();
-                    idToOrderMap.erase(takingOrder->id_);
                     
-                    //
-                    // TODO: deallocate below order with memory pool API
-                    // 
-                    core::RestingOrder* poppedOrder = matchingLevel.pop_front();
+                    idToOrderMap.erase(takingOrder->id_);
+
+                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+
+                    impl.memoryPool_.deallocate(clearedOrder);
 
                     if (matchingLevel.empty())
                     {
@@ -205,13 +212,24 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
         {
             subResult.status_ = SubmitStatus::FILLED;
         }
-        else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
-        {
-            subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
-        }
         else
         {
-            subResult.status_ = SubmitStatus::RESTING;
+            RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
+
+            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime);
+            impl.idToOrderMap.emplace(limitRequest.id_, newOrder);
+
+            auto [it, inserted] = askLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});
+            it->second.push_back(newOrder);
+
+            if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
+            {
+                subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
+            }
+            else
+            {
+                subResult.status_ = SubmitStatus::RESTING;
+            }
         }
     }
 
