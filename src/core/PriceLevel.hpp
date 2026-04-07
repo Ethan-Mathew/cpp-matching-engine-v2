@@ -2,6 +2,7 @@
 
 #include "lob/Aliases.hpp"
 
+#include "LevelPruneResult.hpp"
 #include "RestingOrder.hpp"
 
 #include <cstdint>
@@ -32,7 +33,7 @@ public:
 
     void take_shares_from_first(Quantity sharesTaken);
 
-    void prune_day_orders();
+    LevelPruneResult prune_day_orders();
 
     RestingOrder* front();
     const RestingOrder* front() const;
