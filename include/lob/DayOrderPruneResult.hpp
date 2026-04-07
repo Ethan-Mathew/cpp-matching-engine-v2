@@ -9,9 +9,9 @@ namespace lob
 
 struct DayOrderPruneResult
 {
-    Volume sharesEliminated             = 0;
-    std::uint64_t ordersPruned          = 0;
-    std::uint32_t priceLevelsEliminated = 0;
+    Volume sharesErased             = 0;
+    std::uint64_t ordersPruned      = 0;
+    std::uint32_t priceLevelsErased = 0;
 };
 
 } // namespace lob
