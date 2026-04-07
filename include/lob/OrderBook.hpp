@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Aliases.hpp"
+#include "DayOrderPruneResult.hpp"
 #include "OrderRequests.hpp"
 #include "SubmissionResults.hpp"
 
@@ -21,7 +22,8 @@ public:
     void submit_market_order();
     void modify_order();
     void cancel_order();
-    void prune_good_for_day_orders();
+
+    DayOrderPruneResult session_end();
 
 private:
     template<Side S>
