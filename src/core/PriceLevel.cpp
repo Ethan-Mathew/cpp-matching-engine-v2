@@ -120,7 +120,7 @@ LevelPruneResult PriceLevel::prune_day_orders()
         if (ptr->lifetime_ == RestingLifetime::DAY)
         {
             result.ordersPrunedCount++;
-            result.sharesPrunedCount += ptr->quantity_;
+            result.sharesErased += ptr->quantity_;
             result.ordersPruned.push_back(ptr);
 
             remove_order(ptr);
