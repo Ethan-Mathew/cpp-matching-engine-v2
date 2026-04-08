@@ -146,7 +146,12 @@ bool PriceLevel::empty() const
     return orderCount_ == 0;
 }
 
-lob::Volume PriceLevel::get_total_volume() const
+Price PriceLevel::get_price() const
+{
+    return price_;
+}
+
+Volume PriceLevel::get_total_volume() const
 {
     return totalVolume_;
 }

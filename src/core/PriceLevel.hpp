@@ -39,6 +39,7 @@ public:
     const RestingOrder* front() const;
     bool empty() const;
 
+    Price get_price() const;
     Volume get_total_volume() const;
     std::uint32_t get_order_count() const;
 
