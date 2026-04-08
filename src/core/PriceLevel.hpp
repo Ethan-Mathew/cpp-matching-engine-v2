@@ -33,7 +33,7 @@ public:
 
     void take_shares_from_first(Quantity sharesTaken);
 
-    RestingOrder* find_day_orders(RestingOrder* startingOrder);
+    LevelPruneResult prune_day_orders();
 
     RestingOrder* front();
     const RestingOrder* front() const;
