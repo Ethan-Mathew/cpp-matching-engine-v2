@@ -1,16 +1,19 @@
 #pragma once
 
 #include "Aliases.hpp"
+#include "RestingOrder.hpp"
 
 #include <cstddef>
+#include <vector>
 
 namespace lob::core
 {
 
 struct LevelPruneResult
 {
-    Volume sharesPruned        = 0;
-    std::uint32_t ordersPruned = 0;
+    Volume sharesPrunedCount        = 0;
+    std::uint32_t ordersPrunedCount = 0;
+    std::vector<RestingOrder*> ordersPruned;
 };
 
 } // namespace lob::core
