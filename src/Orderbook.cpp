@@ -58,9 +58,6 @@ bool crosses(Price orderPrice, Price levelPrice)
 
 void OrderBook::retire_order(core::RestingOrder* order)
 {
-    auto& idToOrderMap = pImpl_->idToOrderMap_;
-    auto& memoryPool = pImpl_->memoryPool_;
-
     pImpl_->idToOrderMap_.erase(order->id_);
     pImpl_->memoryPool_.deallocate(order);
 }
@@ -260,18 +257,30 @@ void submit_limit_order_ioc();
 
 /*
 template<typename LevelMap>
-void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult)
+void OrderBook::prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult)
 {
-    LevelPruneResult pruneResult;
-
-    for (auto it = levelMap.begin(); it != levelMap.end())
+    for (auto it = levelMap.begin(); it != levelMap.end();)
     {
         core::PriceLevel& level = it->second;
+        core::LevelPruneResult pruneResult = level.prune_day_orders();
 
-        level.prune_day_orders();
+        dayResult.ordersPruned += pruneResult.ordersPruned.size();
+        dayResult.sharesErased += pruneResult.sharesErased;
+        
+        for (core::RestingOrder* order : pruneResult.ordersPruned)
+        {
+            retire_order(order);
+        }
+
+        if (level.empty())
+        {
+            levelMap.erase(level.get_price());
+            dayResult.priceLevelsErased++;
+        }
     }
 }
 
+/*
 DayOrderPruneResult OrderBook::session_end()
 {
     auto& impl = *pImpl_;
