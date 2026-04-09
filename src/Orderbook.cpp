@@ -56,7 +56,8 @@ bool crosses(Price orderPrice, Price levelPrice)
     }
 }
 
-void OrderBook::retire_order(core::RestingOrder* order)
+template <class RestingOrderType>
+void OrderBook::retire_order(RestingOrderType* order)
 {
     pImpl_->idToOrderMap_.erase(order->id_);
     pImpl_->memoryPool_.deallocate(order);
@@ -159,7 +160,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
         {
             RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
 
-            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifeTime);
+            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime);
             idToOrderMap.emplace(limitRequest.id_, newOrder);
 
             auto [it, inserted] = bidLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});

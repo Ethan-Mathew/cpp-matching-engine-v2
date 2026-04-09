@@ -27,7 +27,8 @@ private:
     template<Side S>
     bool crosses(Price orderPrice, Price levelPrice) const;
 
-    void retire_order(core::RestingOrder* order);
+    template<class RestingOrder>
+    void retire_order(RestingOrder* order);
 
     template<typename LevelMap>
     void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult);
