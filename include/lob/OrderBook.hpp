@@ -5,9 +5,7 @@
 #include "OrderRequests.hpp"
 #include "SubmissionResults.hpp"
 
-#include <functional>
 #include <memory>
-#include <optional>
 
 namespace lob
 {
@@ -30,6 +28,9 @@ private:
     bool crosses(Price orderPrice, Price levelPrice) const;
 
     void retire_order(core::RestingOrder* order);
+
+    template<typename LevelMap>
+    void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult);
 
     void submit_limit_order_fok();
     void submit_limit_order_ioc();

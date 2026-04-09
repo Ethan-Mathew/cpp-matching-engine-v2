@@ -255,7 +255,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
 void submit_limit_order_fok();
 void submit_limit_order_ioc();
 
-/*
+
 template<typename LevelMap>
 void OrderBook::prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult)
 {
@@ -274,8 +274,12 @@ void OrderBook::prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& day
 
         if (level.empty())
         {
-            levelMap.erase(level.get_price());
+            it = levelMap.erase(it);
             dayResult.priceLevelsErased++;
+        }
+        else
+        {
+            it++;
         }
     }
 }
