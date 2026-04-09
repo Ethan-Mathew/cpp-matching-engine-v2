@@ -284,40 +284,17 @@ void OrderBook::prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& day
     }
 }
 
-/*
-DayOrderPruneResult OrderBook::session_end()
+DayOrderPruneResult OrderBook::on_session_end()
 {
-    auto& impl = *pImpl_;
-    auto& bidLevels = impl.bidLevels_;
-    auto& askLevels = impl.askLevels_;
-    auto& idToOrderMap = impl.idToOrderMap_;
+    auto& bidLevels = pImpl_->bidLevels_;
+    auto& askLevels = pImpl_->askLevels_;
 
     DayOrderPruneResult sessionResult;
 
-    prune_from_side_map(bidLevels);
-
-    for (auto pair : bidLevels)
-    {
-        core::PriceLevel& level = pair.second;
-        core::LevelPruneResult levelResult = level.prune_day_orders();
-
-        sessionResult.ordersPruned += levelResult.ordersPruned.size();
-        sessionResult.sharesErased += levelResult.sharesErased;
-        
-        for (core::RestingOrder* order : levelResult.ordersPruned)
-        {
-            idToOrderMap.erase(order->id_);
-        }
-
-        if (level.empty())
-        {
-            bidLevels.erase(level.get_price());
-            sessionResult.priceLevelsErased++;
-        }
-    }
+    prune_from_side_map(bidLevels, sessionResult);
+    prune_from_side_map(askLevels, sessionResult);
 
     return sessionResult;
 }
-*/
 
 } // namespace lob

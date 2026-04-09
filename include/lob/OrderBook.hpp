@@ -21,7 +21,7 @@ public:
     void modify_order();
     void cancel_order();
 
-    DayOrderPruneResult session_end();
+    DayOrderPruneResult on_session_end();
 
 private:
     template<Side S>
