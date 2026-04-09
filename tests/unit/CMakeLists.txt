@@ -1,6 +1,8 @@
 add_executable(UnitTests 
-    PriceLevelTests.cpp
     MemoryPoolTests.cpp
+    OBSessionEndTests.cpp
+    OBSubmitLimitOrderTests.cpp
+    PriceLevelTests.cpp
 )
 
 target_include_directories(UnitTests
