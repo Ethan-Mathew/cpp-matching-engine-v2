@@ -5,6 +5,7 @@
 #include "OrderRequests.hpp"
 #include "SubmissionResults.hpp"
 
+#include <cstddef>
 #include <memory>
 
 namespace lob
@@ -22,6 +23,11 @@ public:
     void cancel_order();
 
     DayOrderPruneResult on_session_end();
+
+    std::size_t get_num_orders() const;
+    std::size_t get_num_levels_bids() const;
+    std::size_t get_num_levels_asks() const;
+    std::size_t get_memory_pool_size() const;
 
 private:
     template<Side S>

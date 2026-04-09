@@ -10,6 +10,7 @@
 #include "core/LevelPruneResult.hpp"
 #include "core/MemoryPool.hpp"
 #include "core/PriceLevel.hpp"
+#include "core/RestingLifetime.hpp"
 #include "core/RestingOrder.hpp"
 
 #include <cassert>
@@ -42,6 +43,26 @@ struct OrderBook::Impl
     {
     }
 };
+
+std::size_t OrderBook::get_num_orders() const
+{
+    return pImpl_->idToOrderMap_.size();
+}
+
+std::size_t OrderBook::get_num_levels_bids() const
+{
+    return pImpl_->bidLevels_.size();
+}
+
+std::size_t OrderBook::get_num_levels_asks() const
+{
+    return pImpl_->askLevels_.size();
+}
+
+std::size_t OrderBook::get_memory_pool_size() const
+{
+    return pImpl_->memoryPool_.get_total_elements();
+}
 
 template<Side S>
 bool crosses(Price orderPrice, Price levelPrice)
