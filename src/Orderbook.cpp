@@ -67,7 +67,7 @@ std::size_t OrderBook::get_memory_pool_size() const
 }
 
 template<Side S>
-bool crosses(Price orderPrice, Price levelPrice)
+bool OrderBook::crosses(Price orderPrice, Price levelPrice) const
 {
     if constexpr (S == Side::BUY)
     {
