@@ -7,6 +7,7 @@
 #include "lob/SubmissionResults.hpp"
 #include "lob/TimeInForce.hpp"
 
+#include "core/LevelPruneResult.hpp"
 #include "core/MemoryPool.hpp"
 #include "core/PriceLevel.hpp"
 #include "core/RestingOrder.hpp"
@@ -18,6 +19,7 @@
 #include <memory>
 #include <optional>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace lob
@@ -31,9 +33,9 @@ OrderBook::OrderBook(std::size_t poolSize)
 struct OrderBook::Impl
 {
     core::MemoryPool memoryPool_;
-    std::unordered_map<OrderID, lob::core::RestingOrder*> idToOrderMap_;
-    std::map<Price, lob::core::PriceLevel, std::greater<Price>> bidLevels_;
-    std::map<Price, lob::core::PriceLevel, std::less<Price>> askLevels_;
+    std::unordered_map<OrderID, core::RestingOrder*> idToOrderMap_;
+    std::map<Price, core::PriceLevel, std::greater<Price>> bidLevels_;
+    std::map<Price, core::PriceLevel, std::less<Price>> askLevels_;
 
     Impl(std::size_t poolSize)
         : memoryPool_{poolSize}
@@ -52,6 +54,15 @@ bool crosses(Price orderPrice, Price levelPrice)
     {
         return orderPrice <= levelPrice;
     }
+}
+
+void OrderBook::retire_order(core::RestingOrder* order)
+{
+    auto& idToOrderMap = pImpl_->idToOrderMap_;
+    auto& memoryPool = pImpl_->memoryPool_;
+
+    pImpl_->idToOrderMap_.erase(order->id_);
+    pImpl_->memoryPool_.deallocate(order);
 }
 
 SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitRequest)
@@ -247,4 +258,53 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
 void submit_limit_order_fok();
 void submit_limit_order_ioc();
 
-} // namespace lob::core
+/*
+template<typename LevelMap>
+void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult)
+{
+    LevelPruneResult pruneResult;
+
+    for (auto it = levelMap.begin(); it != levelMap.end())
+    {
+        core::PriceLevel& level = it->second;
+
+        level.prune_day_orders();
+    }
+}
+
+DayOrderPruneResult OrderBook::session_end()
+{
+    auto& impl = *pImpl_;
+    auto& bidLevels = impl.bidLevels_;
+    auto& askLevels = impl.askLevels_;
+    auto& idToOrderMap = impl.idToOrderMap_;
+
+    DayOrderPruneResult sessionResult;
+
+    prune_from_side_map(bidLevels);
+
+    for (auto pair : bidLevels)
+    {
+        core::PriceLevel& level = pair.second;
+        core::LevelPruneResult levelResult = level.prune_day_orders();
+
+        sessionResult.ordersPruned += levelResult.ordersPruned.size();
+        sessionResult.sharesErased += levelResult.sharesErased;
+        
+        for (core::RestingOrder* order : levelResult.ordersPruned)
+        {
+            idToOrderMap.erase(order->id_);
+        }
+
+        if (level.empty())
+        {
+            bidLevels.erase(level.get_price());
+            sessionResult.priceLevelsErased++;
+        }
+    }
+
+    return sessionResult;
+}
+*/
+
+} // namespace lob

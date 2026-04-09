@@ -29,6 +29,8 @@ private:
     template<Side S>
     bool crosses(Price orderPrice, Price levelPrice) const;
 
+    void retire_order(core::RestingOrder* order);
+
     void submit_limit_order_fok();
     void submit_limit_order_ioc();
 
