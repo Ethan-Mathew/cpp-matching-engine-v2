@@ -44,6 +44,8 @@ struct OrderBook::Impl
     }
 };
 
+OrderBook::~OrderBook() = default;
+
 std::size_t OrderBook::get_num_orders() const
 {
     return pImpl_->idToOrderMap_.size();

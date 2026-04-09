@@ -16,6 +16,7 @@ class OrderBook
 public:
 
     OrderBook(std::size_t poolSize);
+    ~OrderBook();
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
     void submit_market_order();
@@ -49,4 +50,4 @@ private:
     std::unique_ptr<Impl> pImpl_;
 };
 
-} // namespace lob::core
+} // namespace lob
