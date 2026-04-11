@@ -71,6 +71,42 @@ std::size_t OrderBook::get_memory_pool_curr_alloc() const
     return pImpl_->memoryPool_.get_currently_allocated();
 }
 
+std::size_t OrderBook::get_num_orders_at_level(std::size_t level, Side side) const
+{
+    if (side == Side::BUY)
+    {
+        return pImpl_->bidLevels_[level].get_order_count();
+    }
+    else
+    {
+        return pImpl_->askLevels_[level].get_order_count();
+    }
+}
+
+std::size_t OrderBook::get_num_shares_at_level(std::size_t level, Side side) const
+{
+    if (side == Side::BUY)
+    {
+        return pImpl_->bidLevels_[level].get_total_volume();
+    }
+    else
+    {
+        return pImpl_->askLevels_[level].get_total_volume();
+    }
+}
+
+bool OrderBook::check_level_exists(std::size_t level, Side side) const
+{
+    if (side == Side::BUY)
+    {
+        return pImpl_->bidLevels_.find(level) != pImpl_->bidLevels_.end();
+    }
+    else
+    {
+        return pImpl_->askLevels_.find(level) != pImpl_->askLevels_.end();
+    }
+}
+
 template<Side S>
 bool OrderBook::crosses(Price orderPrice, Price levelPrice) const
 {

@@ -11,7 +11,7 @@ namespace lob::core
 
 struct LevelPruneResult
 {
-    Volume sharesErased             = 0;
+    Volume sharesErased = 0;
     std::vector<RestingOrder*> ordersPruned;
 };
 
