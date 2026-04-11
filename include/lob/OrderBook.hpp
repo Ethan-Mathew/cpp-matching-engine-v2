@@ -29,6 +29,7 @@ public:
     std::size_t get_num_levels_bids() const;
     std::size_t get_num_levels_asks() const;
     std::size_t get_memory_pool_size() const;
+    std::size_t get_memory_pool_curr_alloc() const;
 
 private:
     template<Side S>

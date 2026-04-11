@@ -66,6 +66,11 @@ std::size_t OrderBook::get_memory_pool_size() const
     return pImpl_->memoryPool_.get_total_elements();
 }
 
+std::size_t OrderBook::get_memory_pool_curr_alloc() const
+{
+    return pImpl_->memoryPool_.get_currently_allocated();
+}
+
 template<Side S>
 bool OrderBook::crosses(Price orderPrice, Price levelPrice) const
 {
