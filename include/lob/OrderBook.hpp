@@ -30,9 +30,9 @@ public:
     std::size_t get_num_levels_asks() const;
     std::size_t get_memory_pool_size() const;
     std::size_t get_memory_pool_curr_alloc() const;
-    std::size_t get_num_orders_at_level(std::size_t level, Side side) const;
-    std::size_t get_num_shares_at_level(std::size_t level, Side side) const;
-    bool check_level_exists(std::size_t level, Side side) const;
+    std::size_t get_num_orders_at_level(Price level, Side side) const;
+    std::size_t get_num_shares_at_level(Price level, Side side) const;
+    bool check_level_exists(Price level, Side side) const;
 
 private:
     template<Side S>

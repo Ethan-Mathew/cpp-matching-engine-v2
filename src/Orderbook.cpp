@@ -71,31 +71,31 @@ std::size_t OrderBook::get_memory_pool_curr_alloc() const
     return pImpl_->memoryPool_.get_currently_allocated();
 }
 
-std::size_t OrderBook::get_num_orders_at_level(std::size_t level, Side side) const
+std::size_t OrderBook::get_num_orders_at_level(Price level, Side side) const
 {
     if (side == Side::BUY)
     {
-        return pImpl_->bidLevels_[level].get_order_count();
+        return (pImpl_->bidLevels_).at(level).get_order_count();
     }
     else
     {
-        return pImpl_->askLevels_[level].get_order_count();
+        return (pImpl_->askLevels_).at(level).get_order_count();
     }
 }
 
-std::size_t OrderBook::get_num_shares_at_level(std::size_t level, Side side) const
+std::size_t OrderBook::get_num_shares_at_level(Price level, Side side) const
 {
     if (side == Side::BUY)
     {
-        return pImpl_->bidLevels_[level].get_total_volume();
+        return (pImpl_->bidLevels_).at(level).get_total_volume();
     }
     else
     {
-        return pImpl_->askLevels_[level].get_total_volume();
+        return (pImpl_->askLevels_).at(level).get_total_volume();
     }
 }
 
-bool OrderBook::check_level_exists(std::size_t level, Side side) const
+bool OrderBook::check_level_exists(Price level, Side side) const
 {
     if (side == Side::BUY)
     {
