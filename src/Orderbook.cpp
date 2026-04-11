@@ -149,6 +149,14 @@ SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitReq
             return submit_limit_order_resting<Side::SELL>(limitRequest);
         }
     case TimeInForce::IOC:
+        if (limitRequest.side_ == Side::BUY)
+        {
+            return submit_limit_order_ioc<Side::BUY>(limitRequest);
+        }
+        else
+        {
+            return submit_limit_order_ioc<Side::SELL>(limitRequest);
+        }
     case TimeInForce::FOK:
     default:
         return SubmissionResult{};
@@ -317,8 +325,16 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
     return subResult;
 }
 
+template<Side S>
+SubmissionResult OrderBook::submit_limit_order_ioc(const LimitOrderRequest& limitRequest)
+{
+    Impl& impl = *pImpl_;
+    auto& askLevels = impl.askLevels_;
+    auto& bidLevels = impl.bidLevels_;
+    auto& idToOrderMap = impl.idToOrderMap_;
+}
+
 void submit_limit_order_fok();
-void submit_limit_order_ioc();
 
 
 template<typename LevelMap>

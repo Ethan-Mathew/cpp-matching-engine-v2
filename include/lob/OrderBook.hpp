@@ -19,6 +19,7 @@ public:
     ~OrderBook();
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
+
     void submit_market_order();
     void modify_order();
     void cancel_order();
@@ -45,10 +46,11 @@ private:
     void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult);
 
     void submit_limit_order_fok();
-    void submit_limit_order_ioc();
 
     template<Side S>
     SubmissionResult submit_limit_order_resting(const LimitOrderRequest& limitRequest);
+    template<Side S>
+    SubmissionResult submit_limit_order_ioc(const LimitOrderRequest& limitRequest);
     
     struct Impl;
     std::unique_ptr<Impl> pImpl_;
