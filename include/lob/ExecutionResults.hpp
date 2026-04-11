@@ -10,8 +10,8 @@ namespace lob
 struct ExecutionResult
 {
     OrderID makerOrderID_;
-    Price makerPrice;
-    Quantity executedQuantity;
+    Price makerPrice_;
+    Quantity executedQuantity_;
 };
 
 enum class CancelResult : std::uint8_t
