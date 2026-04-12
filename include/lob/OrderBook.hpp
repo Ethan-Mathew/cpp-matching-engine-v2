@@ -14,7 +14,6 @@ namespace lob
 class OrderBook
 {
 public:
-
     OrderBook(std::size_t poolSize);
     ~OrderBook();
 
@@ -39,11 +38,11 @@ private:
     template<Side S>
     bool crosses(Price orderPrice, Price levelPrice) const;
 
-    template<Side S>
-    bool check_available_liquidity(Price thresholdPrice) const;
+    template <Side S, typename LevelMap>
+    bool check_available_liquidity(const LevelMap& levelMap, Price limitPrice, Quantity minimumQuantity) const;
 
-    template<class RestingOrder>
-    void retire_order(RestingOrder* order);
+    template<typename RestingOrderType>
+    void retire_order(RestingOrderType* order);
 
     template<typename LevelMap>
     void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult);

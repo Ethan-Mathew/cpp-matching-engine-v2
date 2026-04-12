@@ -120,7 +120,27 @@ bool OrderBook::crosses(Price orderPrice, Price levelPrice) const
     }
 }
 
-template <class RestingOrderType>
+template <Side S, typename LevelMap>
+bool OrderBook::check_available_liquidity(const LevelMap& levelMap, Price limitPrice, Quantity minimumQuantity) const
+{
+    Volume totalValidVolume = 0;
+
+    for (const auto& [levelPrice, levelPtr] : levelMap)
+    {
+        if (totalValidVolume >= minimumQuantity || crosses<S>(limitPrice, levelPrice))
+        {
+            totalValidVolume += levelPtr.get_total_volume();
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    return totalValidVolume >= minimumQuantity;
+}
+
+template <typename RestingOrderType>
 void OrderBook::retire_order(RestingOrderType* order)
 {
     pImpl_->idToOrderMap_.erase(order->id_);
