@@ -53,7 +53,8 @@ private:
     template<Side S>
     SubmissionResult submit_limit_order_ioc(const LimitOrderRequest& limitRequest);
 
-    void submit_limit_order_fok();
+    template<Side S>
+    SubmissionResult submit_limit_order_fok(const LimitOrderRequest& limitRequest);
     
     struct Impl;
     std::unique_ptr<Impl> pImpl_;
