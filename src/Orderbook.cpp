@@ -187,8 +187,121 @@ SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitReq
             return submit_limit_order_fok<Side::SELL>(limitRequest);
         };
     }
+}
 
-    return SubmissionResult {.status_ = SubmitStatus::REJECTED};
+SubmissionResult OrderBook::submit_market_order(const MarketOrderRequest& marketRequest)
+{
+    Impl& impl = *pImpl_;
+    auto& idToOrderMap = impl.idToOrderMap_;
+    
+    if (idToOrderMap.contains(marketRequest.id_))
+    {
+        return SubmissionResult{.quantityRequested_ = marketRequest.quantity_, .status_ = SubmitStatus::REJECTED};
+    }
+
+    auto& askLevels = impl.askLevels_;
+    auto& bidLevels = impl.bidLevels_;
+
+    Quantity remainingShares = marketRequest.quantity_;
+    SubmissionResult subResult {.quantityRequested_ = marketRequest.quantity_};
+
+    if (marketRequest.side_ == Side::BUY)
+    {
+        while (remainingShares > 0 && !askLevels.empty())
+        {
+            auto topOfAsks = askLevels.begin();
+
+            core::PriceLevel& matchingLevel = topOfAsks->second;
+
+            core::RestingOrder* takingOrder = matchingLevel.front();
+            assert(takingOrder != nullptr);
+
+            if (takingOrder->quantity_ > remainingShares)
+            {
+                subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
+                matchingLevel.take_shares_from_first(remainingShares);
+
+                subResult.quantityFilled_ += remainingShares;
+                subResult.status_ = SubmitStatus::FILLED;
+
+                return subResult;
+            }
+            else
+            {
+                remainingShares -= takingOrder->quantity_;
+        
+                subResult.quantityFilled_ += takingOrder->quantity_;
+                subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
+                
+                idToOrderMap.erase(takingOrder->id_);
+
+                core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+
+                impl.memoryPool_.deallocate(clearedOrder);
+
+                if (matchingLevel.empty())
+                {
+                    askLevels.erase(topOfAsks);
+                }
+            }
+        }
+    }
+    else
+    {
+        while (remainingShares > 0 && !bidLevels.empty())
+        {
+            auto topOfBids = bidLevels.begin();
+                
+            core::PriceLevel& matchingLevel = topOfBids->second;
+
+            core::RestingOrder* takingOrder = matchingLevel.front();
+            assert(takingOrder != nullptr);
+
+            if (takingOrder->quantity_ > remainingShares)
+            {
+                subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, remainingShares);
+                matchingLevel.take_shares_from_first(remainingShares);
+
+                subResult.quantityFilled_ += remainingShares;
+                subResult.status_ = SubmitStatus::FILLED;
+
+                return subResult;
+            }
+            else
+            {
+                remainingShares -= takingOrder->quantity_;
+        
+                subResult.quantityFilled_ += takingOrder->quantity_;
+                subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
+                
+                idToOrderMap.erase(takingOrder->id_);
+
+                core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+
+                impl.memoryPool_.deallocate(clearedOrder);
+
+                if (matchingLevel.empty())
+                {
+                    bidLevels.erase(topOfBids);
+                }
+            }
+        }
+    }
+
+    if (remainingShares == 0)
+    {
+        subResult.status_ = SubmitStatus::FILLED;
+    }
+    else if (remainingShares == marketRequest.quantity_)
+    {
+        subResult.status_ = SubmitStatus::CANCELED;
+    }
+    else
+    {
+        subResult.status_ = SubmitStatus::PARTIALLY_FILLED_CANCELED;
+    }
+
+    return subResult;
 }
 
 template<Side S>

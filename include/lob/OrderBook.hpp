@@ -19,7 +19,8 @@ public:
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
 
-    void submit_market_order();
+    SubmissionResult submit_market_order(const MarketOrderRequest& marketRequest);
+
     void modify_order();
     void cancel_order();
 
