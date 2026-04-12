@@ -1,6 +1,7 @@
 add_executable(UnitTests 
     MemoryPoolTests.cpp
     OBSessionEndTests.cpp
+    OBSubmitLimitOrderFOKTests.cpp
     OBSubmitLimitOrderIOCTests.cpp
     OBSubmitLimitOrderRestingTests.cpp
     PriceLevelTests.cpp
