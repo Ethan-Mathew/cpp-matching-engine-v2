@@ -439,7 +439,7 @@ SubmissionResult OrderBook::submit_limit_order_ioc(const LimitOrderRequest& limi
     }
     else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
     {
-        subResult.status_ = SubmitStatus::PARTIALLY_FILLED_CANCELLED;
+        subResult.status_ = SubmitStatus::PARTIALLY_FILLED_CANCELED;
     }
     else
     {
