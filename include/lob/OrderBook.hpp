@@ -39,18 +39,22 @@ private:
     template<Side S>
     bool crosses(Price orderPrice, Price levelPrice) const;
 
+    template<Side S>
+    bool check_available_liquidity(Price thresholdPrice) const;
+
     template<class RestingOrder>
     void retire_order(RestingOrder* order);
 
     template<typename LevelMap>
     void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult);
 
-    void submit_limit_order_fok();
-
     template<Side S>
     SubmissionResult submit_limit_order_resting(const LimitOrderRequest& limitRequest);
+
     template<Side S>
     SubmissionResult submit_limit_order_ioc(const LimitOrderRequest& limitRequest);
+
+    void submit_limit_order_fok();
     
     struct Impl;
     std::unique_ptr<Impl> pImpl_;
