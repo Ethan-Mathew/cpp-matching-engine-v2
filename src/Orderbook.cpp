@@ -332,6 +332,121 @@ SubmissionResult OrderBook::submit_limit_order_ioc(const LimitOrderRequest& limi
     auto& askLevels = impl.askLevels_;
     auto& bidLevels = impl.bidLevels_;
     auto& idToOrderMap = impl.idToOrderMap_;
+
+    Quantity remainingShares = limitRequest.quantity_;
+    SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
+    
+    if constexpr (S == Side::BUY)
+    {
+        while (remainingShares > 0 && !askLevels.empty())
+        {
+            auto topOfAsks = askLevels.begin();
+
+            if (crosses<Side::BUY>(limitRequest.price_, topOfAsks->first))
+            {
+                core::PriceLevel& matchingLevel = topOfAsks->second;
+
+                core::RestingOrder* takingOrder = matchingLevel.front();
+                assert(takingOrder != nullptr);
+
+                if (takingOrder->quantity_ > remainingShares)
+                {
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
+                    matchingLevel.take_shares_from_first(remainingShares);
+
+                    subResult.quantityFilled_ += remainingShares;
+                    subResult.status_ = SubmitStatus::FILLED;
+
+                    return subResult;
+                }
+                else
+                {
+                    remainingShares -= takingOrder->quantity_;
+            
+                    subResult.quantityFilled_ += takingOrder->quantity_;
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
+                    
+                    idToOrderMap.erase(takingOrder->id_);
+
+                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+
+                    impl.memoryPool_.deallocate(clearedOrder);
+
+                    if (matchingLevel.empty())
+                    {
+                        askLevels.erase(topOfAsks);
+                    }
+                }
+            }
+            else 
+            {
+                break;
+            }
+        }
+    }
+    else
+    {
+        while (remainingShares > 0 && !bidLevels.empty())
+        {
+            auto topOfBids = bidLevels.begin();
+
+            if (crosses<Side::SELL>(limitRequest.price_, topOfBids->first))
+            {
+                core::PriceLevel& matchingLevel = topOfBids->second;
+
+                core::RestingOrder* takingOrder = matchingLevel.front();
+                assert(takingOrder != nullptr);
+
+                if (takingOrder->quantity_ > remainingShares)
+                {
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, remainingShares);
+                    matchingLevel.take_shares_from_first(remainingShares);
+
+                    subResult.quantityFilled_ += remainingShares;
+                    subResult.status_ = SubmitStatus::FILLED;
+
+                    return subResult;
+                }
+                else
+                {
+                    remainingShares -= takingOrder->quantity_;
+            
+                    subResult.quantityFilled_ += takingOrder->quantity_;
+                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
+                    
+                    idToOrderMap.erase(takingOrder->id_);
+
+                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+
+                    impl.memoryPool_.deallocate(clearedOrder);
+
+                    if (matchingLevel.empty())
+                    {
+                        bidLevels.erase(topOfBids);
+                    }
+                }
+            }
+            else 
+            {
+                break;
+            }
+        }
+    }
+
+    if (remainingShares == 0)
+    {
+        subResult.status_ = SubmitStatus::FILLED;
+    }
+    else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
+    {
+        subResult.status_ = SubmitStatus::PARTIALLY_FILLED_CANCELLED;
+    }
+    else
+    {
+        subResult.status_ = SubmitStatus::CANCELED;
+    }
+
+    return subResult;
 }
 
 void submit_limit_order_fok();
