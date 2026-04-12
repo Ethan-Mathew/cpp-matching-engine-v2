@@ -13,6 +13,7 @@ enum class SubmitStatus : std::uint8_t
     FILLED,
     PARTIALLY_FILLED_RESTING,
     PARTIALLY_FILLED_CANCELED,
+    KILLED,
     REJECTED,
     RESTING,
     CANCELED
