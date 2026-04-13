@@ -1,6 +1,6 @@
 #pragma once
 
-#include "lob/Aliases.hpp"
+#include "Aliases.hpp"
 
 #include <cstdint>
 

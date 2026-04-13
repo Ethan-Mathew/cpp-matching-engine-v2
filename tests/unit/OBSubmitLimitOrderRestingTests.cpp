@@ -3,14 +3,13 @@
 #include "lob/Aliases.hpp"
 #include "lob/ExecutionResults.hpp"
 #include "lob/OrderBook.hpp"
-#include "lob/OrderRequests.hpp"
+#include "lob/Requests.hpp"
 #include "lob/Side.hpp"
 #include "lob/SubmissionResults.hpp"
 #include "lob/TimeInForce.hpp"
 
 #include <cstddef>
 #include <cstdint>
-#include <vector>
 
 using namespace lob;
 
