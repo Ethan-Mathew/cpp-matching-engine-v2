@@ -4,6 +4,7 @@ add_executable(UnitTests
     OBSubmitLimitOrderFOKTests.cpp
     OBSubmitLimitOrderIOCTests.cpp
     OBSubmitLimitOrderRestingTests.cpp
+    OBSubmitMarketOrderTests.cpp
     PriceLevelTests.cpp
 )
 
