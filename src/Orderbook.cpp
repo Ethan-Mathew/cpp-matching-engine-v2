@@ -187,6 +187,8 @@ SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitReq
             return submit_limit_order_fok<Side::SELL>(limitRequest);
         };
     }
+
+    return SubmissionResult{.quantityRequested_ = limitRequest.quantity_, .status_ = SubmitStatus::REJECTED};
 }
 
 SubmissionResult OrderBook::submit_market_order(const MarketOrderRequest& marketRequest)
