@@ -54,7 +54,7 @@ struct MarketOrderRequest
     }
 };
 
-struct CancelRequest
+struct CancelOrderRequest
 {
     OrderID id_;
 };
