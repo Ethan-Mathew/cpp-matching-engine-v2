@@ -21,8 +21,9 @@ public:
 
     SubmissionResult submit_market_order(const MarketOrderRequest& marketRequest);
 
+    CancelResult cancel_order(const CancelOrderRequest& cancelRequest);
+
     void modify_order();
-    void cancel_order();
 
     DayOrderPruneResult on_session_end();
 

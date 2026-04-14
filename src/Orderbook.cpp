@@ -306,6 +306,50 @@ SubmissionResult OrderBook::submit_market_order(const MarketOrderRequest& market
     return subResult;
 }
 
+CancelResult OrderBook::cancel_order(const CancelOrderRequest& cancelRequest)
+{
+    Impl& impl = *pImpl_;
+    auto& idToOrderMap = impl.idToOrderMap_;
+    
+    auto it = idToOrderMap.find(cancelRequest.id_);
+
+    if (it == idToOrderMap.end())
+    {
+        return CancelResult{.status_ = CancelStatus::NOT_FOUND};
+    }
+
+    core::RestingOrder* cancelOrder = it->second;
+
+    auto& askLevels = impl.askLevels_;
+    auto& bidLevels = impl.bidLevels_;
+
+    core::PriceLevel* cancellationLevel = cancelOrder->level_;
+    cancellationLevel->remove_order(cancelOrder);
+
+    if (cancellationLevel->empty())
+    {
+        Price cancelPrice = cancellationLevel->get_price();
+
+        auto askIt = askLevels.find(cancelPrice);
+
+        if (askIt != askLevels.end() && std::addressof(askIt->second) == cancellationLevel)
+        {
+            askLevels.erase(askIt);
+        }
+        else
+        {
+            auto bidIt = bidLevels.find(cancelPrice);
+            bidLevels.erase(bidIt);
+        }
+    }
+
+    Quantity quantityCancelled = cancelOrder->quantity_;
+    
+    retire_order(cancelOrder);
+
+    return CancelResult{quantityCancelled, CancelStatus::CANCELED};
+}
+
 template<Side S>
 SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
