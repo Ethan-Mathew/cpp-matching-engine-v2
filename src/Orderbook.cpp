@@ -3,8 +3,8 @@
 #include "lob/OrderBook.hpp"
 #include "lob/OrderType.hpp"
 #include "lob/Requests.hpp"
+#include "lob/Results.hpp"
 #include "lob/Side.hpp"
-#include "lob/SubmissionResults.hpp"
 #include "lob/TimeInForce.hpp"
 
 #include "core/LevelPruneResult.hpp"

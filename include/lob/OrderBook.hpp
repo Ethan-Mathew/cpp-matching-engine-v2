@@ -3,7 +3,7 @@
 #include "Aliases.hpp"
 #include "DayOrderPruneResult.hpp"
 #include "Requests.hpp"
-#include "SubmissionResults.hpp"
+#include "Results.hpp"
 
 #include <cstddef>
 #include <memory>

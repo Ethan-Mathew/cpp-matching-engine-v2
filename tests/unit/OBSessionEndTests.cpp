@@ -4,8 +4,8 @@
 #include "lob/DayOrderPruneResult.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/Requests.hpp"
+#include "lob/Results.hpp"
 #include "lob/Side.hpp"
-#include "lob/SubmissionResults.hpp"
 #include "lob/TimeInForce.hpp"
 
 #include <cstddef>
