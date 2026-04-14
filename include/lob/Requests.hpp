@@ -59,4 +59,12 @@ struct CancelOrderRequest
     OrderID id_;
 };
 
+struct ModifyOrderRequest
+{
+    OrderID id_;
+    Quantity newQuantity_;
+    Price newPrice_;
+
+};
+
 } // namespace lob
