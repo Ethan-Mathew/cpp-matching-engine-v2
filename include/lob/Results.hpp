@@ -32,4 +32,16 @@ struct SubmissionResult
     }
 };
 
+enum class CancelStatus : std::uint8_t
+{
+    CANCELED,
+    NOT_FOUND
+};
+
+struct CancelResult
+{
+    Quantity quantityCancelled_ = 0;
+    CancelStatus status_;
+};
+
 } // namespace lob
