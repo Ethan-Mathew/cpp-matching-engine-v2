@@ -1,7 +1,6 @@
 #pragma once
 
 #include "lob/Aliases.hpp"
-#include "lob/OrderType.hpp"
 #include "lob/Side.hpp"
 
 #include "RestingLifetime.hpp"
@@ -17,16 +16,18 @@ struct RestingOrder
     RestingOrder* prev_ = nullptr;
     PriceLevel* level_  = nullptr;
 
-    lob::OrderID id_;
-    lob::Quantity quantity_;
+    OrderID id_;
+    Quantity quantity_;
     RestingLifetime lifetime_;
+    Side side_;
 
     RestingOrder() = delete;
 
-    RestingOrder(lob::OrderID id, lob::Quantity quantity, RestingLifetime lifetime)
+    RestingOrder(OrderID id, Quantity quantity, RestingLifetime lifetime, Side side)
         : id_{id}
         , quantity_{quantity}
         , lifetime_{lifetime}
+        , side_{side}
     {
     }
 
