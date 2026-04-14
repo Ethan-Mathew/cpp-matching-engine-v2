@@ -282,3 +282,21 @@ TEST_F(OBCancelOrderTest, ReCancelingSameOrderReturnsNotFound)
 
     expect_empty_book();
 }
+
+TEST_F(OBCancelOrderTest, CancelAfterSessionEndPrunedDayOrderReturnsNotFound)
+{
+    ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::SELL, TimeInForce::DAY));
+
+    DayOrderPruneResult pruneResult = ob_.on_session_end();
+
+    ASSERT_EQ(pruneResult.ordersPruned, 1);
+    ASSERT_EQ(pruneResult.sharesErased, 5);
+    ASSERT_EQ(pruneResult.priceLevelsErased, 1);
+
+    CancelResult cancelResult = ob_.cancel_order(make_cancel(1));
+
+    EXPECT_EQ(cancelResult.status_, CancelStatus::NOT_FOUND);
+    EXPECT_EQ(cancelResult.quantityCancelled_, 0);
+
+    expect_empty_book();
+}

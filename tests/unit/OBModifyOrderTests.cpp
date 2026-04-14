@@ -307,3 +307,82 @@ TEST_F(OBModifyOrderTest, ModifyLosesQueuePriority)
     EXPECT_EQ(ob_.get_num_levels_bids(), 0);
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 1);
 }
+
+TEST_F(OBModifyOrderTest, ModifyPreservesGTCLifetimeThroughSessionEnd)
+{
+    ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY, TimeInForce::GTC));
+
+    ModificationResult result = ob_.modify_order(make_modify(1, 7, defaultPrice + 10));
+
+    ASSERT_EQ(result.status_, ModificationStatus::RESUBMITTED);
+    ASSERT_TRUE(result.resubmissionResult_.has_value());
+
+    DayOrderPruneResult pruneResult = ob_.on_session_end();
+
+    EXPECT_EQ(pruneResult.ordersPruned, 0);
+    EXPECT_EQ(pruneResult.sharesErased, 0);
+    EXPECT_EQ(pruneResult.priceLevelsErased, 0);
+
+    EXPECT_EQ(ob_.get_num_orders(), 1);
+    EXPECT_EQ(ob_.get_num_levels_bids(), 1);
+    EXPECT_EQ(ob_.get_num_levels_asks(), 0);
+    EXPECT_EQ(ob_.get_memory_pool_curr_alloc(), 1);
+    EXPECT_TRUE(ob_.check_level_exists(defaultPrice + 10, Side::BUY));
+    EXPECT_EQ(ob_.get_num_orders_at_level(defaultPrice + 10, Side::BUY), 1);
+    EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice + 10, Side::BUY), 7);
+}
+
+TEST_F(OBModifyOrderTest, ModifyAfterSessionEndPrunedDayOrderReturnsNotFound)
+{
+    ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY, TimeInForce::DAY));
+
+    DayOrderPruneResult pruneResult = ob_.on_session_end();
+
+    ASSERT_EQ(pruneResult.ordersPruned, 1);
+    ASSERT_EQ(pruneResult.sharesErased, 5);
+    ASSERT_EQ(pruneResult.priceLevelsErased, 1);
+
+    ModificationResult result = ob_.modify_order(make_modify(1, 8, defaultPrice + 5));
+
+    EXPECT_EQ(result.status_, ModificationStatus::NOT_FOUND);
+    EXPECT_EQ(result.originalQuantity_, 0);
+    EXPECT_FALSE(result.resubmissionResult_.has_value());
+
+    expect_empty_book();
+}
+
+TEST_F(OBModifyOrderTest, ModifySamePriceAndSameQuantityStillLosesQueuePriority)
+{
+    ob_.submit_limit_order(make_limit_order(1, defaultPrice, 2, Side::SELL, TimeInForce::GTC));
+    ob_.submit_limit_order(make_limit_order(2, defaultPrice, 3, Side::SELL, TimeInForce::GTC));
+
+    ModificationResult modifyResult = ob_.modify_order(make_modify(1, 2, defaultPrice));
+
+    ASSERT_EQ(modifyResult.status_, ModificationStatus::RESUBMITTED);
+    ASSERT_TRUE(modifyResult.resubmissionResult_.has_value());
+
+    SubmissionResult takerResult =
+        ob_.submit_limit_order(make_limit_order(3, defaultPrice, 4, Side::BUY, TimeInForce::IOC));
+
+    EXPECT_EQ(takerResult.status_, SubmitStatus::FILLED);
+    EXPECT_EQ(takerResult.quantityRequested_, 4);
+    EXPECT_EQ(takerResult.quantityFilled_, 4);
+    EXPECT_EQ(takerResult.get_quantity_remaining(), 0);
+    ASSERT_EQ(takerResult.executions_.size(), 2u);
+
+    EXPECT_EQ(takerResult.executions_[0].makerOrderID_, 2);
+    EXPECT_EQ(takerResult.executions_[0].makerPrice_, defaultPrice);
+    EXPECT_EQ(takerResult.executions_[0].executedQuantity_, 3);
+
+    EXPECT_EQ(takerResult.executions_[1].makerOrderID_, 1);
+    EXPECT_EQ(takerResult.executions_[1].makerPrice_, defaultPrice);
+    EXPECT_EQ(takerResult.executions_[1].executedQuantity_, 1);
+
+    EXPECT_EQ(ob_.get_num_orders(), 1);
+    EXPECT_EQ(ob_.get_num_levels_asks(), 1);
+    EXPECT_EQ(ob_.get_num_levels_bids(), 0);
+    EXPECT_EQ(ob_.get_memory_pool_curr_alloc(), 1);
+    EXPECT_TRUE(ob_.check_level_exists(defaultPrice, Side::SELL));
+    EXPECT_EQ(ob_.get_num_orders_at_level(defaultPrice, Side::SELL), 1);
+    EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 1);
+}

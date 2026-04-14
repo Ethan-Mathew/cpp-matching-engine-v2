@@ -280,3 +280,41 @@ TEST_F(OBSubmitLimitOrderIOCTest, DuplicateOrderIdIsRejected)
     EXPECT_EQ(ob_.get_num_levels_asks(), 0);
     EXPECT_EQ(ob_.get_memory_pool_curr_alloc(), 1);
 }
+
+TEST_F(OBSubmitLimitOrderIOCTest, BuyExactTouchCrossesAndFills)
+{
+    ob_.submit_limit_order(make_order(1, defaultPrice, 4, Side::SELL, TimeInForce::GTC));
+
+    SubmissionResult result = ob_.submit_limit_order(
+        make_order(2, defaultPrice, 4, Side::BUY));
+
+    EXPECT_EQ(result.status_, SubmitStatus::FILLED);
+    EXPECT_EQ(result.quantityRequested_, 4);
+    EXPECT_EQ(result.quantityFilled_, 4);
+    EXPECT_EQ(result.get_quantity_remaining(), 0);
+    ASSERT_EQ(result.executions_.size(), 1u);
+    EXPECT_EQ(result.executions_[0].makerOrderID_, 1);
+    EXPECT_EQ(result.executions_[0].makerPrice_, defaultPrice);
+    EXPECT_EQ(result.executions_[0].executedQuantity_, 4);
+
+    expect_empty_book();
+}
+
+TEST_F(OBSubmitLimitOrderIOCTest, SellExactTouchCrossesAndFills)
+{
+    ob_.submit_limit_order(make_order(1, defaultPrice, 6, Side::BUY, TimeInForce::GTC));
+
+    SubmissionResult result = ob_.submit_limit_order(
+        make_order(2, defaultPrice, 6, Side::SELL));
+
+    EXPECT_EQ(result.status_, SubmitStatus::FILLED);
+    EXPECT_EQ(result.quantityRequested_, 6);
+    EXPECT_EQ(result.quantityFilled_, 6);
+    EXPECT_EQ(result.get_quantity_remaining(), 0);
+    ASSERT_EQ(result.executions_.size(), 1u);
+    EXPECT_EQ(result.executions_[0].makerOrderID_, 1);
+    EXPECT_EQ(result.executions_[0].makerPrice_, defaultPrice);
+    EXPECT_EQ(result.executions_[0].executedQuantity_, 6);
+
+    expect_empty_book();
+}
