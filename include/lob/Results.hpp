@@ -3,6 +3,7 @@
 #include "Aliases.hpp"
 #include "ExecutionResults.hpp"
 
+#include <optional>
 #include <vector>
 
 namespace lob
@@ -42,6 +43,20 @@ struct CancelResult
 {
     Quantity quantityCancelled_ = 0;
     CancelStatus status_;
+};
+
+enum class ModificationStatus : std::uint8_t
+{
+    RESUBMITTED,
+    CANCELED,
+    NOT_FOUND
+};
+
+struct ModificationResult
+{
+    Quantity originalQuantity_ = 0;
+    ModificationStatus status_;
+    std::optional<SubmissionResult> resubmissionResult_;
 };
 
 } // namespace lob
