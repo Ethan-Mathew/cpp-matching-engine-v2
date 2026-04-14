@@ -350,6 +350,35 @@ CancelResult OrderBook::cancel_order(const CancelOrderRequest& cancelRequest)
     return CancelResult{quantityCancelled, CancelStatus::CANCELED};
 }
 
+/*
+ModificationResult OrderBook::modify_order(const ModifyOrderRequest& modificationRequest)
+{
+    Impl& impl = *pImpl_;
+    auto& idToOrderMap = impl.idToOrderMap_;
+
+    auto it = idToOrderMap.find(modificationRequest.id_);
+
+    if (it == idToOrderMap.end())
+    {
+        return ModificationResult{.status_ = ModificationStatus::NOT_FOUND, .resubmissionResult_ = std::nullopt};
+    }
+
+    CancelOrderRequest cancelRequest{modificationRequest.id_};
+    CancelResult cancelResult = cancel_order(cancelRequest);
+
+    if (modificationRequest.newQuantity_ > 0)
+    {
+        // create a new order
+    }
+    else
+    {
+        // 
+
+        return ModificationResult{cancelResult.quantityCancelled_, ModificationStatus::CANCELED, std::nullopt};
+    }
+}
+*/
+
 template<Side S>
 SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
@@ -417,7 +446,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
         {
             RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
 
-            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime);
+            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime, Side::BUY);
             idToOrderMap.emplace(limitRequest.id_, newOrder);
 
             auto [it, inserted] = bidLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});
@@ -489,7 +518,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
         {
             RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
 
-            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime);
+            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime, Side::SELL);
             
             idToOrderMap.emplace(limitRequest.id_, newOrder);
 
