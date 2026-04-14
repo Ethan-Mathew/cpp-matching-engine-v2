@@ -54,4 +54,9 @@ struct MarketOrderRequest
     }
 };
 
+struct CancelRequest
+{
+    OrderID id_;
+};
+
 } // namespace lob
