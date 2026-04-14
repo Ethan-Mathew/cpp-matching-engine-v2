@@ -363,17 +363,29 @@ ModificationResult OrderBook::modify_order(const ModifyOrderRequest& modificatio
         return ModificationResult{.status_ = ModificationStatus::NOT_FOUND, .resubmissionResult_ = std::nullopt};
     }
 
+    core::RestingOrder* resubmitOrder = it->second;
+    Quantity originalQuantity = resubmitOrder->quantity_;
+    Side originalSide = resubmitOrder->side_;
+    TimeInForce originalLifetime = (resubmitOrder->lifetime_ == core::RestingLifetime::GTC) ? TimeInForce::GTC : TimeInForce::DAY;
+
     CancelOrderRequest cancelRequest{modificationRequest.id_};
     CancelResult cancelResult = cancel_order(cancelRequest);
 
     if (modificationRequest.newQuantity_ > 0)
     {
-        // create a new order
+        LimitOrderRequest limitRequest{modificationRequest.id_, 
+                                       modificationRequest.newPrice_, 
+                                       modificationRequest.newQuantity_, 
+                                       originalSide,
+                                       originalLifetime
+                                      };
+
+        SubmissionResult resubmitResult = submit_limit_order(limitRequest);
+
+        return ModificationResult{originalQuantity, ModificationStatus::RESUBMITTED, resubmitResult};
     }
     else
     {
-        // 
-
         return ModificationResult{cancelResult.quantityCancelled_, ModificationStatus::CANCELED, std::nullopt};
     }
 }
@@ -444,7 +456,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
         }
         else
         {
-            RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
+            core::RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? core::RestingLifetime::GTC : core::RestingLifetime::DAY;
 
             core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime, Side::BUY);
             idToOrderMap.emplace(limitRequest.id_, newOrder);
@@ -516,7 +528,7 @@ SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& 
         }
         else
         {
-            RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? RestingLifetime::GTC : RestingLifetime::DAY;
+            core::RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? core::RestingLifetime::GTC : core::RestingLifetime::DAY;
 
             core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime, Side::SELL);
             
