@@ -1,11 +1,11 @@
 #include <gtest/gtest.h>
 
+#include "lob/Aliases.hpp"
+#include "lob/Side.hpp"
+
 #include "MemoryPool.hpp"
 #include "RestingLifetime.hpp"
 #include "RestingOrder.hpp"
-
-#include "lob/Aliases.hpp"
-#include "lob/Side.hpp"
 
 #include <cstddef>
 #include <cstdint>
