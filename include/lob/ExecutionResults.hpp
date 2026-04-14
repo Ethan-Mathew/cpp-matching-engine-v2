@@ -14,10 +14,4 @@ struct ExecutionResult
     Quantity executedQuantity_;
 };
 
-enum class ModificationResult : std::uint8_t
-{
-    NOT_FOUND,
-    MODIFIED
-};
-
 } // namespace lob
