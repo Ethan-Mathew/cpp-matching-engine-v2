@@ -350,7 +350,6 @@ CancelResult OrderBook::cancel_order(const CancelOrderRequest& cancelRequest)
     return CancelResult{quantityCancelled, CancelStatus::CANCELED};
 }
 
-/*
 ModificationResult OrderBook::modify_order(const ModifyOrderRequest& modificationRequest)
 {
     Impl& impl = *pImpl_;
@@ -389,7 +388,6 @@ ModificationResult OrderBook::modify_order(const ModifyOrderRequest& modificatio
         return ModificationResult{cancelResult.quantityCancelled_, ModificationStatus::CANCELED, std::nullopt};
     }
 }
-*/
 
 template<Side S>
 SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)

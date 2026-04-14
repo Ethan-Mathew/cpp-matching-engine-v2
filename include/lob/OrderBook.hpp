@@ -18,12 +18,9 @@ public:
     ~OrderBook();
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
-
     SubmissionResult submit_market_order(const MarketOrderRequest& marketRequest);
-
     CancelResult cancel_order(const CancelOrderRequest& cancelRequest);
-
-    void modify_order();
+    ModificationResult modify_order(const ModifyOrderRequest& modificationRequest);
 
     DayOrderPruneResult on_session_end();
 
