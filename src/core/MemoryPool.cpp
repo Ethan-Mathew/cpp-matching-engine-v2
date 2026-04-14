@@ -7,7 +7,6 @@
 #include <cstddef>
 #include <memory>
 #include <new>
-#include <utility>
 #include <vector>
 
 namespace lob::core

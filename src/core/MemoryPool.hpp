@@ -4,6 +4,7 @@
 
 #include <cstddef>
 #include <new>
+#include <utility>
 #include <vector>
 
 namespace lob::core
