@@ -301,4 +301,9 @@ TEST_F(OBModifyOrderTest, ModifyLosesQueuePriority)
     EXPECT_EQ(takerResult.executions_[1].makerOrderID_, 1);
     EXPECT_EQ(takerResult.executions_[1].makerPrice_, defaultPrice);
     EXPECT_EQ(takerResult.executions_[1].executedQuantity_, 1);
+
+    EXPECT_EQ(ob_.get_num_orders(), 1);
+    EXPECT_EQ(ob_.get_num_levels_asks(), 1);
+    EXPECT_EQ(ob_.get_num_levels_bids(), 0);
+    EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 1);
 }
