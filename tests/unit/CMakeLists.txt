@@ -24,3 +24,5 @@ target_link_libraries(UnitTests
 
 include(GoogleTest)
 gtest_discover_tests(UnitTests)
+
+enable_sanitizers(UnitTests)

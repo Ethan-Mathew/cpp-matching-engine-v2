@@ -10,3 +10,5 @@ target_include_directories(OrderBook
 )
 
 target_compile_features(OrderBook PUBLIC cxx_std_20)
+
+enable_sanitizers(OrderBook)

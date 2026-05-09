@@ -13,5 +13,7 @@ target_link_libraries(StressTests
         GTest::gtest_main
 )
 
+enable_sanitizers(UnitTests)
+
 include(GoogleTest)
 gtest_discover_tests(StressTests)
