@@ -33,6 +33,8 @@ public:
     std::size_t get_num_shares_at_level(Price level, Side side) const;
     bool check_level_exists(Price level, Side side) const;
 
+    void assert_valid() const;
+
 private:
     template<Side S>
     bool crosses(Price orderPrice, Price levelPrice) const;

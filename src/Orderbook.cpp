@@ -841,4 +841,82 @@ DayOrderPruneResult OrderBook::on_session_end()
     return sessionResult;
 }
 
+void OrderBook::assert_valid() const
+{
+#ifndef NDEBUG
+    const Impl& impl = *pImpl_;
+
+    std::size_t totalOrders = 0;
+
+    auto validate_side = [&](const auto& levels, Side expectedSide)
+    {
+        for (const auto& [price, level] : levels)
+        {
+            assert(!level.empty());
+            assert(level.get_price() == price);
+            assert(level.front() != nullptr);
+
+            std::size_t countedOrders = 0;
+            Volume countedVolume = 0;
+
+            const core::RestingOrder* prev = nullptr;
+            for (const core::RestingOrder* node = level.front(); node != nullptr; node = node->next_)
+            {
+                assert(node->level_ == &level);
+                assert(node->side_ == expectedSide);
+                assert(node->prev_ == prev);
+                if (prev)
+                {
+                    assert(prev->next_ == node);
+                }
+
+                auto it = impl.idToOrderMap_.find(node->id_);
+                assert(it != impl.idToOrderMap_.end());
+                assert(it->second == node);
+
+                ++countedOrders;
+                countedVolume += node->quantity_;
+                prev = node;
+            }
+
+            assert(countedOrders == level.get_order_count());
+            assert(countedVolume == level.get_total_volume());
+
+            totalOrders += countedOrders;
+        }
+    };
+
+    validate_side(impl.bidLevels_, Side::BUY);
+    validate_side(impl.askLevels_, Side::SELL);
+
+    assert(totalOrders == impl.idToOrderMap_.size());
+    assert(totalOrders == impl.memoryPool_.get_currently_allocated());
+
+    for (const auto& [id, order] : impl.idToOrderMap_)
+    {
+        assert(order != nullptr);
+        assert(order->id_ == id);
+        assert(order->level_ != nullptr);
+
+        bool found = false;
+        for (const core::RestingOrder* node = order->level_->front(); node != nullptr; node = node->next_)
+        {
+            if (node == order)
+            {
+                found = true;
+                break;
+            }
+        }
+        assert(found);
+    }
+
+    if (!impl.bidLevels_.empty() && !impl.askLevels_.empty())
+    {
+        const Price bestBid = impl.bidLevels_.begin()->first;
+        const Price bestAsk = impl.askLevels_.begin()->first;
+        assert(bestBid < bestAsk);
+    }
+#endif
+}
+
 } // namespace lob
