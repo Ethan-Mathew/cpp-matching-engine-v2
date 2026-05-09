@@ -1,6 +1,7 @@
 # Directories
 /build
 /build-sanitize
+/build-bench
 /.vscode
 
 # Prerequisites
