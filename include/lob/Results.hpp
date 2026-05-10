@@ -17,7 +17,8 @@ enum class SubmitStatus : std::uint8_t
     KILLED,
     REJECTED,
     RESTING,
-    CANCELED
+    CANCELED,
+    COUNT
 };
 
 struct SubmissionResult
@@ -36,7 +37,8 @@ struct SubmissionResult
 enum class CancelStatus : std::uint8_t
 {
     CANCELED,
-    NOT_FOUND
+    NOT_FOUND,
+    COUNT
 };
 
 struct CancelResult
@@ -49,7 +51,8 @@ enum class ModificationStatus : std::uint8_t
 {
     RESUBMITTED,
     CANCELED,
-    NOT_FOUND
+    NOT_FOUND,
+    COUNT
 };
 
 struct ModificationResult
