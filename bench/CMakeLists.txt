@@ -14,4 +14,4 @@ FetchContent_MakeAvailable(
     googlebenchmark
 )
 
-add_subdirectory(mixed_workload)
+add_subdirectory(individual_behaviours)
