@@ -7,7 +7,7 @@
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
 
-#include "core/LevelPruneResult.hpp"
+#include "core/LevelPruneStats.hpp"
 #include "core/MemoryPool.hpp"
 #include "core/PriceLevel.hpp"
 #include "core/RestingLifetime.hpp"
@@ -806,15 +806,14 @@ void OrderBook::prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& day
     for (auto it = levelMap.begin(); it != levelMap.end();)
     {
         core::PriceLevel& level = it->second;
-        core::LevelPruneResult pruneResult = level.prune_day_orders();
 
-        dayResult.ordersPruned += pruneResult.ordersPruned.size();
-        dayResult.sharesErased += pruneResult.sharesErased;
-        
-        for (core::RestingOrder* order : pruneResult.ordersPruned)
-        {
-            retire_order(order);
-        }
+        const core::LevelPruneStats levelStats = level.prune_day_orders([&](core::RestingOrder* order)
+                                                 {
+                                                    retire_order(order);
+                                                 });
+
+        dayResult.ordersPruned += levelStats.ordersPruned_;
+        dayResult.sharesErased += levelStats.quantityPruned_;
 
         if (level.empty())
         {
