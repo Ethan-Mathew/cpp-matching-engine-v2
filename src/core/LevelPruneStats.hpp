@@ -4,15 +4,15 @@
 
 #include "RestingOrder.hpp"
 
-#include <vector>
+#include <cstddef>
 
 namespace lob::core
 {
 
-struct LevelPruneResult
+struct LevelPruneStats
 {
-    Volume sharesErased = 0;
-    std::vector<RestingOrder*> ordersPruned;
+    std::size_t ordersPruned_ = 0;
+    Quantity quantityPruned_ = 0;
 };
 
 } // namespace lob::core

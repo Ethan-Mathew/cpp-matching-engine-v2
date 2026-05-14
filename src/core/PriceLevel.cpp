@@ -1,6 +1,6 @@
 #include "lob/Aliases.hpp"
 
-#include "LevelPruneResult.hpp"
+#include "LevelPruneStats.hpp"
 #include "PriceLevel.hpp"
 #include "RestingOrder.hpp"
 
@@ -106,29 +106,6 @@ void PriceLevel::take_shares_from_first(Quantity sharesTaken)
 {
     head_->quantity_ -= sharesTaken;
     totalVolume_ -= sharesTaken;
-}
-
-LevelPruneResult PriceLevel::prune_day_orders()
-{
-    LevelPruneResult result;
-    RestingOrder* ptr = head_;
-
-    while (ptr)
-    {
-        RestingOrder* next = ptr->next_;
-
-        if (ptr->lifetime_ == RestingLifetime::DAY)
-        {
-            result.sharesErased += ptr->quantity_;
-            result.ordersPruned.push_back(ptr);
-
-            remove_order(ptr);
-        }
-
-        ptr = next;
-    }
-
-    return result;
 }
 
 RestingOrder* PriceLevel::front()
