@@ -9,7 +9,7 @@ namespace lob
 
 struct OrderBookConfig
 {
-    std::size_t initialSlabSize_;
+    std::size_t initialPoolSize_;
     Price minPrice_;
     Price maxPrice_;
 };

@@ -2,6 +2,7 @@
 
 #include "Aliases.hpp"
 #include "DayOrderPruneResult.hpp"
+#include "OrderBookConfig.hpp"
 #include "Requests.hpp"
 #include "Results.hpp"
 
@@ -14,7 +15,7 @@ namespace lob
 class OrderBook
 {
 public:
-    OrderBook(std::size_t poolSize);
+    explicit OrderBook(const OrderBookConfig& config);
     ~OrderBook();
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
