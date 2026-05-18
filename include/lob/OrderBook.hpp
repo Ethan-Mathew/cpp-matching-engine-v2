@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Aliases.hpp"
-#include "DayOrderPruneResult.hpp"
 #include "OrderBookConfig.hpp"
 #include "Requests.hpp"
 #include "Results.hpp"
@@ -45,9 +44,6 @@ private:
 
     template<typename RestingOrderType>
     void retire_order(RestingOrderType* order);
-
-    template<typename LevelMap>
-    void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult);
 
     template<Side S>
     SubmissionResult submit_limit_order_resting(const LimitOrderRequest& limitRequest);

@@ -19,7 +19,7 @@ public:
         NON_EMPTY
     };
 
-    PriceLevel() = delete;
+    PriceLevel() = default;
 
     explicit PriceLevel(lob::Price price);
 

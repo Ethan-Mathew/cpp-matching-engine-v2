@@ -1,6 +1,7 @@
 #include "lob/Aliases.hpp"
 #include "lob/ExecutionResults.hpp"
 #include "lob/OrderBook.hpp"
+#include "lob/OrderBookConfig.hpp"
 #include "lob/OrderType.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Results.hpp"
@@ -9,6 +10,7 @@
 
 #include "core/LevelPruneStats.hpp"
 #include "core/MemoryPool.hpp"
+#include "core/PriceLadder.hpp"
 #include "core/PriceLevel.hpp"
 #include "core/RestingLifetime.hpp"
 #include "core/RestingOrder.hpp"
@@ -16,7 +18,6 @@
 #include <cassert>
 #include <cstddef>
 #include <functional>
-#include <map>
 #include <memory>
 #include <optional>
 #include <unordered_map>
@@ -26,8 +27,8 @@
 namespace lob
 {
 
-OrderBook::OrderBook(std::size_t poolSize)
-    : pImpl_{std::make_unique<Impl>(poolSize)}
+OrderBook::OrderBook(const OrderBookConfig& config)
+    : pImpl_{std::make_unique<Impl>(config)}
 {    
 }
 
@@ -35,11 +36,19 @@ struct OrderBook::Impl
 {
     core::MemoryPool memoryPool_;
     std::unordered_map<OrderID, core::RestingOrder*> idToOrderMap_;
-    std::map<Price, core::PriceLevel, std::greater<Price>> bidLevels_;
-    std::map<Price, core::PriceLevel, std::less<Price>> askLevels_;
 
-    Impl(std::size_t poolSize)
-        : memoryPool_{poolSize}
+    core::PriceLadder bidLevels_;
+    core::PriceLadder askLevels_;
+
+    Price minPrice_;
+    Price maxPrice_;
+
+    Impl(const OrderBookConfig& config)
+        : memoryPool_{config.initialPoolSize_},
+          bidLevels_{config.minPrice_, config.maxPrice_, Side::BUY},
+          askLevels_{config.minPrice_, config.maxPrice_, Side::SELL},
+          minPrice_{config.minPrice_},
+          maxPrice_{config.maxPrice_}
     {
     }
 };
@@ -53,12 +62,12 @@ std::size_t OrderBook::get_num_orders() const
 
 std::size_t OrderBook::get_num_levels_bids() const
 {
-    return pImpl_->bidLevels_.size();
+    return pImpl_->bidLevels_.get_num_non_empty_levels();
 }
 
 std::size_t OrderBook::get_num_levels_asks() const
 {
-    return pImpl_->askLevels_.size();
+    return pImpl_->askLevels_.get_num_non_empty_levels();
 }
 
 std::size_t OrderBook::get_memory_pool_size() const
@@ -75,11 +84,11 @@ std::size_t OrderBook::get_num_orders_at_level(Price level, Side side) const
 {
     if (side == Side::BUY)
     {
-        return (pImpl_->bidLevels_).at(level).get_order_count();
+        return pImpl_->bidLevels_.get_level_at_price(level)->get_order_count();
     }
     else
     {
-        return (pImpl_->askLevels_).at(level).get_order_count();
+        return pImpl_->askLevels_.get_level_at_price(level)->get_order_count();
     }
 }
 
@@ -87,11 +96,11 @@ std::size_t OrderBook::get_num_shares_at_level(Price level, Side side) const
 {
     if (side == Side::BUY)
     {
-        return (pImpl_->bidLevels_).at(level).get_total_volume();
+        return pImpl_->bidLevels_.get_level_at_price(level)->get_total_volume();
     }
     else
     {
-        return (pImpl_->askLevels_).at(level).get_total_volume();
+        return pImpl_->askLevels_.get_level_at_price(level)->get_total_volume();
     }
 }
 
@@ -99,11 +108,11 @@ bool OrderBook::check_level_exists(Price level, Side side) const
 {
     if (side == Side::BUY)
     {
-        return pImpl_->bidLevels_.find(level) != pImpl_->bidLevels_.end();
+        return !(pImpl_->bidLevels_.get_level_at_price(level)->empty());
     }
     else
     {
-        return pImpl_->askLevels_.find(level) != pImpl_->askLevels_.end();
+        return !(pImpl_->askLevels_.get_level_at_price(level)->empty());
     }
 }
 
@@ -151,7 +160,10 @@ SubmissionResult OrderBook::submit_limit_order(const LimitOrderRequest& limitReq
 {
     auto& idToOrderMap = pImpl_->idToOrderMap_;
     
-    if (idToOrderMap.contains(limitRequest.id_))
+    if (idToOrderMap.contains(limitRequest.id_) ||
+        limitRequest.price_ > pImpl_->maxPrice_ ||
+        limitRequest.price_ < pImpl_->minPrice_
+       )
     {
         return SubmissionResult{.quantityRequested_ = limitRequest.quantity_, .status_ = SubmitStatus::REJECTED};
     }
@@ -195,32 +207,32 @@ SubmissionResult OrderBook::submit_market_order(const MarketOrderRequest& market
 {
     Impl& impl = *pImpl_;
     auto& idToOrderMap = impl.idToOrderMap_;
-    
+
     if (idToOrderMap.contains(marketRequest.id_))
     {
         return SubmissionResult{.quantityRequested_ = marketRequest.quantity_, .status_ = SubmitStatus::REJECTED};
     }
 
-    auto& askLevels = impl.askLevels_;
-    auto& bidLevels = impl.bidLevels_;
+    core::PriceLadder& matchingLevels = (marketRequest.side_ == Side::BUY) ? impl.askLevels_ : impl.bidLevels_;
 
     Quantity remainingShares = marketRequest.quantity_;
     SubmissionResult subResult {.quantityRequested_ = marketRequest.quantity_};
 
-    if (marketRequest.side_ == Side::BUY)
+    while (remainingShares > 0)
     {
-        while (remainingShares > 0 && !askLevels.empty())
-        {
-            auto topOfAsks = askLevels.begin();
+        std::optional<Price> bestPrice = matchingLevels.get_best_price();
 
-            core::PriceLevel& matchingLevel = topOfAsks->second;
+        if (bestPrice.has_value())
+        {
+            core::PriceLevel& matchingLevel = *(matchingLevels.get_level_at_price(*bestPrice));
 
             core::RestingOrder* takingOrder = matchingLevel.front();
-            assert(takingOrder != nullptr);
+            OrderID takingOrderID = takingOrder->id_;
+            Quantity takingOrderQuantity = takingOrder->quantity_;
 
-            if (takingOrder->quantity_ > remainingShares)
+            if (takingOrderQuantity > remainingShares)
             {
-                subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, remainingShares);
                 matchingLevel.take_shares_from_first(remainingShares);
 
                 subResult.quantityFilled_ += remainingShares;
@@ -230,63 +242,25 @@ SubmissionResult OrderBook::submit_market_order(const MarketOrderRequest& market
             }
             else
             {
-                remainingShares -= takingOrder->quantity_;
-        
-                subResult.quantityFilled_ += takingOrder->quantity_;
-                subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
-                
-                idToOrderMap.erase(takingOrder->id_);
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, takingOrderQuantity);
+                subResult.quantityFilled_ += takingOrderQuantity;
+
+                idToOrderMap.erase(takingOrderID);
+
+                remainingShares -= takingOrderQuantity;
 
                 core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
                 impl.memoryPool_.deallocate(clearedOrder);
 
                 if (matchingLevel.empty())
                 {
-                    askLevels.erase(topOfAsks);
+                    matchingLevels.update_best_price_from_given(*bestPrice);
                 }
             }
         }
-    }
-    else
-    {
-        while (remainingShares > 0 && !bidLevels.empty())
+        else
         {
-            auto topOfBids = bidLevels.begin();
-                
-            core::PriceLevel& matchingLevel = topOfBids->second;
-
-            core::RestingOrder* takingOrder = matchingLevel.front();
-            assert(takingOrder != nullptr);
-
-            if (takingOrder->quantity_ > remainingShares)
-            {
-                subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, remainingShares);
-                matchingLevel.take_shares_from_first(remainingShares);
-
-                subResult.quantityFilled_ += remainingShares;
-                subResult.status_ = SubmitStatus::FILLED;
-
-                return subResult;
-            }
-            else
-            {
-                remainingShares -= takingOrder->quantity_;
-        
-                subResult.quantityFilled_ += takingOrder->quantity_;
-                subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
-                
-                idToOrderMap.erase(takingOrder->id_);
-
-                core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
-                impl.memoryPool_.deallocate(clearedOrder);
-
-                if (matchingLevel.empty())
-                {
-                    bidLevels.erase(topOfBids);
-                }
-            }
+            break;
         }
     }
 
@@ -294,13 +268,13 @@ SubmissionResult OrderBook::submit_market_order(const MarketOrderRequest& market
     {
         subResult.status_ = SubmitStatus::FILLED;
     }
-    else if (remainingShares == marketRequest.quantity_)
+    else if (remainingShares < marketRequest.quantity_)
     {
-        subResult.status_ = SubmitStatus::CANCELED;
+        subResult.status_ = SubmitStatus::PARTIALLY_FILLED_CANCELED;
     }
     else
     {
-        subResult.status_ = SubmitStatus::PARTIALLY_FILLED_CANCELED;
+        subResult.status_ = SubmitStatus::CANCELED;
     }
 
     return subResult;
@@ -319,27 +293,19 @@ CancelResult OrderBook::cancel_order(const CancelOrderRequest& cancelRequest)
     }
 
     core::RestingOrder* cancelOrder = it->second;
-
-    auto& askLevels = impl.askLevels_;
-    auto& bidLevels = impl.bidLevels_;
-
     core::PriceLevel* cancellationLevel = cancelOrder->level_;
     cancellationLevel->remove_order(cancelOrder);
 
     if (cancellationLevel->empty())
     {
+        core::PriceLadder& restingLevels = (cancelOrder->side_ == Side::BUY) ? impl.bidLevels_ : impl.askLevels_;
+        
         Price cancelPrice = cancellationLevel->get_price();
+        std::optional<Price> currentBestPrice = restingLevels.get_best_price();
 
-        auto askIt = askLevels.find(cancelPrice);
-
-        if (askIt != askLevels.end() && std::addressof(askIt->second) == cancellationLevel)
+        if (currentBestPrice.has_value() && *currentBestPrice == cancelPrice)
         {
-            askLevels.erase(askIt);
-        }
-        else
-        {
-            auto bidIt = bidLevels.find(cancelPrice);
-            bidLevels.erase(bidIt);
+            restingLevels.update_best_price_from_given(cancelPrice);
         }
     }
 
@@ -355,6 +321,13 @@ ModificationResult OrderBook::modify_order(const ModifyOrderRequest& modificatio
     Impl& impl = *pImpl_;
     auto& idToOrderMap = impl.idToOrderMap_;
 
+    if (modificationRequest.newPrice_ > impl.maxPrice_ ||
+        modificationRequest.newPrice_ < impl.minPrice_
+       )
+    {
+        return ModificationResult{.status_ = ModificationStatus::REJECTED, .resubmissionResult_ = std::nullopt};
+    }
+
     auto it = idToOrderMap.find(modificationRequest.id_);
 
     if (it == idToOrderMap.end())
@@ -362,24 +335,26 @@ ModificationResult OrderBook::modify_order(const ModifyOrderRequest& modificatio
         return ModificationResult{.status_ = ModificationStatus::NOT_FOUND, .resubmissionResult_ = std::nullopt};
     }
 
-    core::RestingOrder* resubmitOrder = it->second;
-    Quantity originalQuantity = resubmitOrder->quantity_;
-    Side originalSide = resubmitOrder->side_;
-    TimeInForce originalLifetime = (resubmitOrder->lifetime_ == core::RestingLifetime::GTC) ? TimeInForce::GTC : TimeInForce::DAY;
+    const core::RestingOrder* const resubmitOrder = it->second;
+    const Quantity originalQuantity = resubmitOrder->quantity_;
+    const Side originalSide = resubmitOrder->side_;
+    const TimeInForce originalLifetime = (resubmitOrder->lifetime_ == core::RestingLifetime::GTC) ? 
+                                         TimeInForce::GTC : 
+                                         TimeInForce::DAY;
 
-    CancelOrderRequest cancelRequest{modificationRequest.id_};
-    CancelResult cancelResult = cancel_order(cancelRequest);
+    const CancelOrderRequest cancelRequest{modificationRequest.id_};
+    const CancelResult cancelResult = cancel_order(cancelRequest);
 
     if (modificationRequest.newQuantity_ > 0)
     {
-        LimitOrderRequest limitRequest{modificationRequest.id_, 
-                                       modificationRequest.newPrice_, 
-                                       modificationRequest.newQuantity_, 
-                                       originalSide,
-                                       originalLifetime
-                                      };
+        const LimitOrderRequest limitRequest{modificationRequest.id_, 
+                                             modificationRequest.newPrice_, 
+                                             modificationRequest.newQuantity_, 
+                                             originalSide,
+                                             originalLifetime
+        };
 
-        SubmissionResult resubmitResult = submit_limit_order(limitRequest);
+        const SubmissionResult resubmitResult = submit_limit_order(limitRequest);
 
         return ModificationResult{originalQuantity, ModificationStatus::RESUBMITTED, resubmitResult};
     }
@@ -393,157 +368,95 @@ template<Side S>
 SubmissionResult OrderBook::submit_limit_order_resting(const LimitOrderRequest& limitRequest)
 {
     Impl& impl = *pImpl_;
-    auto& askLevels = impl.askLevels_;
-    auto& bidLevels = impl.bidLevels_;
+    core::PriceLadder& matchingLevels = (S == Side::BUY) ? impl.askLevels_ : impl.bidLevels_;
     auto& idToOrderMap = impl.idToOrderMap_;
 
     Quantity remainingShares = limitRequest.quantity_;
     SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
-    
-    if constexpr (S == Side::BUY)
+
+    while (remainingShares > 0)
     {
-        while (remainingShares > 0 && !askLevels.empty())
+        std::optional<Price> bestPrice = matchingLevels.get_best_price();
+
+        if (bestPrice.has_value() && crosses<S>(limitRequest.price_, *bestPrice))
         {
-            auto topOfAsks = askLevels.begin();
+            core::PriceLevel& matchingLevel = *(matchingLevels.get_level_at_price(*bestPrice));
 
-            if (crosses<Side::BUY>(limitRequest.price_, topOfAsks->first))
+            core::RestingOrder* takingOrder = matchingLevel.front();
+            OrderID takingOrderID = takingOrder->id_;
+            Quantity takingOrderQuantity = takingOrder->quantity_;
+
+            if (takingOrderQuantity > remainingShares)
             {
-                core::PriceLevel& matchingLevel = topOfAsks->second;
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, remainingShares);
+                matchingLevel.take_shares_from_first(remainingShares);
 
-                core::RestingOrder* takingOrder = matchingLevel.front();
-                assert(takingOrder != nullptr);
+                subResult.quantityFilled_ += remainingShares;
+                subResult.status_ = SubmitStatus::FILLED;
 
-                if (takingOrder->quantity_ > remainingShares)
-                {
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
-                    matchingLevel.take_shares_from_first(remainingShares);
-
-                    subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = SubmitStatus::FILLED;
-
-                    return subResult;
-                }
-                else
-                {
-                    remainingShares -= takingOrder->quantity_;
-            
-                    subResult.quantityFilled_ += takingOrder->quantity_;
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
-                    
-                    idToOrderMap.erase(takingOrder->id_);
-
-                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
-                    impl.memoryPool_.deallocate(clearedOrder);
-
-                    if (matchingLevel.empty())
-                    {
-                        askLevels.erase(topOfAsks);
-                    }
-                }
-            }
-            else 
-            {
-                break;
-            }
-        }
-
-        if (remainingShares == 0)
-        {
-            subResult.status_ = SubmitStatus::FILLED;
-        }
-        else
-        {
-            core::RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? core::RestingLifetime::GTC : core::RestingLifetime::DAY;
-
-            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime, Side::BUY);
-            idToOrderMap.emplace(limitRequest.id_, newOrder);
-
-            auto [it, inserted] = bidLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});
-            it->second.push_back(newOrder);
-
-            if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
-            {
-                subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
+                return subResult;
             }
             else
             {
-                subResult.status_ = SubmitStatus::RESTING;
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, takingOrderQuantity);
+                subResult.quantityFilled_ += takingOrderQuantity;
+
+                idToOrderMap.erase(takingOrderID);
+
+                remainingShares -= takingOrderQuantity;
+
+                core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+                impl.memoryPool_.deallocate(clearedOrder);
+
+                if (matchingLevel.empty())
+                {
+                    matchingLevels.update_best_price_from_given(*bestPrice);
+                }
             }
         }
+        else
+        {
+            break;
+        }
+    }
+
+    if (remainingShares == 0)
+    {
+        subResult.status_ = SubmitStatus::FILLED;
+        return subResult;
+    }
+
+    core::RestingOrder* orderToRest = impl.memoryPool_.allocate(
+        limitRequest.id_,
+        remainingShares,
+        (limitRequest.tif_ == TimeInForce::GTC) ? core::RestingLifetime::GTC : core::RestingLifetime::DAY,
+        limitRequest.side_
+    );
+
+    core::PriceLadder& restingLevels = (S == Side::BUY) ? impl.bidLevels_ : impl.askLevels_;
+    core::PriceLevel& restingLevel = *(restingLevels.get_level_at_price(limitRequest.price_));
+
+    restingLevel.push_back(orderToRest);
+
+    idToOrderMap.emplace(limitRequest.id_, orderToRest);
+
+    std::optional<Price> currentBestPrice = restingLevels.get_best_price();
+
+    if (!currentBestPrice.has_value() || 
+        (restingLevels.get_side() == Side::BUY && limitRequest.price_ > *currentBestPrice) ||
+        (restingLevels.get_side() == Side::SELL && limitRequest.price_ < *currentBestPrice)    
+       )
+    {
+        restingLevels.set_best_price(limitRequest.price_);
+    }
+
+    if (remainingShares < limitRequest.quantity_)
+    {
+        subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
     }
     else
     {
-        while (remainingShares > 0 && !bidLevels.empty())
-        {
-            auto topOfBids = bidLevels.begin();
-
-            if (crosses<Side::SELL>(limitRequest.price_, topOfBids->first))
-            {
-                core::PriceLevel& matchingLevel = topOfBids->second;
-
-                core::RestingOrder* takingOrder = matchingLevel.front();
-                assert(takingOrder != nullptr);
-
-                if (takingOrder->quantity_ > remainingShares)
-                {
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, remainingShares);
-                    matchingLevel.take_shares_from_first(remainingShares);
-
-                    subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = SubmitStatus::FILLED;
-
-                    return subResult;
-                }
-                else
-                {
-                    remainingShares -= takingOrder->quantity_;
-            
-                    subResult.quantityFilled_ += takingOrder->quantity_;
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
-                    
-                    idToOrderMap.erase(takingOrder->id_);
-
-                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
-                    impl.memoryPool_.deallocate(clearedOrder);
-
-                    if (matchingLevel.empty())
-                    {
-                        bidLevels.erase(topOfBids);
-                    }
-                }
-            }
-            else 
-            {
-                break;
-            }
-        }
-
-        if (remainingShares == 0)
-        {
-            subResult.status_ = SubmitStatus::FILLED;
-        }
-        else
-        {
-            core::RestingLifetime restingLifetime = (limitRequest.tif_ == TimeInForce::GTC) ? core::RestingLifetime::GTC : core::RestingLifetime::DAY;
-
-            core::RestingOrder* newOrder = impl.memoryPool_.allocate(limitRequest.id_, remainingShares, restingLifetime, Side::SELL);
-            
-            idToOrderMap.emplace(limitRequest.id_, newOrder);
-
-            auto [it, inserted] = askLevels.emplace(limitRequest.price_, core::PriceLevel{limitRequest.price_});
-            it->second.push_back(newOrder);
-
-            if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
-            {
-                subResult.status_ = SubmitStatus::PARTIALLY_FILLED_RESTING;
-            }
-            else
-            {
-                subResult.status_ = SubmitStatus::RESTING;
-            }
-        }
+        subResult.status_ = SubmitStatus::RESTING;
     }
 
     return subResult;
@@ -553,107 +466,55 @@ template<Side S>
 SubmissionResult OrderBook::submit_limit_order_ioc(const LimitOrderRequest& limitRequest)
 {
     Impl& impl = *pImpl_;
-    auto& askLevels = impl.askLevels_;
-    auto& bidLevels = impl.bidLevels_;
+    core::PriceLadder& matchingLevels = (S == Side::BUY) ? impl.askLevels_ : impl.bidLevels_;
     auto& idToOrderMap = impl.idToOrderMap_;
 
     Quantity remainingShares = limitRequest.quantity_;
     SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
-    
-    if constexpr (S == Side::BUY)
+
+    while (remainingShares > 0)
     {
-        while (remainingShares > 0 && !askLevels.empty())
+        std::optional<Price> bestPrice = matchingLevels.get_best_price();
+
+        if (bestPrice.has_value() && crosses<S>(limitRequest.price_, *bestPrice))
         {
-            auto topOfAsks = askLevels.begin();
+            core::PriceLevel& matchingLevel = *(matchingLevels.get_level_at_price(*bestPrice));
 
-            if (crosses<Side::BUY>(limitRequest.price_, topOfAsks->first))
+            core::RestingOrder* takingOrder = matchingLevel.front();
+            OrderID takingOrderID = takingOrder->id_;
+            Quantity takingOrderQuantity = takingOrder->quantity_;
+
+            if (takingOrderQuantity > remainingShares)
             {
-                core::PriceLevel& matchingLevel = topOfAsks->second;
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, remainingShares);
+                matchingLevel.take_shares_from_first(remainingShares);
 
-                core::RestingOrder* takingOrder = matchingLevel.front();
-                assert(takingOrder != nullptr);
+                subResult.quantityFilled_ += remainingShares;
+                subResult.status_ = SubmitStatus::FILLED;
 
-                if (takingOrder->quantity_ > remainingShares)
-                {
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
-                    matchingLevel.take_shares_from_first(remainingShares);
-
-                    subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = SubmitStatus::FILLED;
-
-                    return subResult;
-                }
-                else
-                {
-                    remainingShares -= takingOrder->quantity_;
-            
-                    subResult.quantityFilled_ += takingOrder->quantity_;
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
-                    
-                    idToOrderMap.erase(takingOrder->id_);
-
-                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
-                    impl.memoryPool_.deallocate(clearedOrder);
-
-                    if (matchingLevel.empty())
-                    {
-                        askLevels.erase(topOfAsks);
-                    }
-                }
+                return subResult;
             }
-            else 
+            else
             {
-                break;
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, takingOrderQuantity);
+                subResult.quantityFilled_ += takingOrderQuantity;
+
+                idToOrderMap.erase(takingOrderID);
+
+                remainingShares -= takingOrderQuantity;
+
+                core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+                impl.memoryPool_.deallocate(clearedOrder);
+
+                if (matchingLevel.empty())
+                {
+                    matchingLevels.update_best_price_from_given(*bestPrice);
+                }
             }
         }
-    }
-    else
-    {
-        while (remainingShares > 0 && !bidLevels.empty())
+        else
         {
-            auto topOfBids = bidLevels.begin();
-
-            if (crosses<Side::SELL>(limitRequest.price_, topOfBids->first))
-            {
-                core::PriceLevel& matchingLevel = topOfBids->second;
-
-                core::RestingOrder* takingOrder = matchingLevel.front();
-                assert(takingOrder != nullptr);
-
-                if (takingOrder->quantity_ > remainingShares)
-                {
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, remainingShares);
-                    matchingLevel.take_shares_from_first(remainingShares);
-
-                    subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = SubmitStatus::FILLED;
-
-                    return subResult;
-                }
-                else
-                {
-                    remainingShares -= takingOrder->quantity_;
-            
-                    subResult.quantityFilled_ += takingOrder->quantity_;
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
-                    
-                    idToOrderMap.erase(takingOrder->id_);
-
-                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
-                    impl.memoryPool_.deallocate(clearedOrder);
-
-                    if (matchingLevel.empty())
-                    {
-                        bidLevels.erase(topOfBids);
-                    }
-                }
-            }
-            else 
-            {
-                break;
-            }
+            break;
         }
     }
 
@@ -661,7 +522,7 @@ SubmissionResult OrderBook::submit_limit_order_ioc(const LimitOrderRequest& limi
     {
         subResult.status_ = SubmitStatus::FILLED;
     }
-    else if (remainingShares > 0 && remainingShares < limitRequest.quantity_)
+    else if (remainingShares < limitRequest.quantity_)
     {
         subResult.status_ = SubmitStatus::PARTIALLY_FILLED_CANCELED;
     }
@@ -677,119 +538,62 @@ template<Side S>
 SubmissionResult OrderBook::submit_limit_order_fok(const LimitOrderRequest& limitRequest)
 {
     Impl& impl = *pImpl_;
-    auto& askLevels = impl.askLevels_;
-    auto& bidLevels = impl.bidLevels_;
+    core::PriceLadder& matchingLevels = (S == Side::BUY) ? impl.askLevels_ : impl.bidLevels_;
     auto& idToOrderMap = impl.idToOrderMap_;
 
-    Quantity remainingShares = limitRequest.quantity_;
     SubmissionResult subResult {.quantityRequested_ = limitRequest.quantity_};
-    
-    if constexpr (S == Side::BUY)
+
+    if (!matchingLevels.has_sufficient_marketable_liquidity(limitRequest.price_, limitRequest.quantity_))
     {
-        if (!check_available_liquidity<S>(askLevels, limitRequest.price_, limitRequest.quantity_))
-        {
-            subResult.status_ = SubmitStatus::KILLED;
-            return subResult;
-        }
-
-        while (remainingShares > 0 && !askLevels.empty())
-        {
-            auto topOfAsks = askLevels.begin();
-
-            if (crosses<Side::BUY>(limitRequest.price_, topOfAsks->first))
-            {
-                core::PriceLevel& matchingLevel = topOfAsks->second;
-
-                core::RestingOrder* takingOrder = matchingLevel.front();
-                assert(takingOrder != nullptr);
-
-                if (takingOrder->quantity_ > remainingShares)
-                {
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, remainingShares);
-                    matchingLevel.take_shares_from_first(remainingShares);
-
-                    subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = SubmitStatus::FILLED;
-
-                    return subResult;
-                }
-                else
-                {
-                    remainingShares -= takingOrder->quantity_;
-            
-                    subResult.quantityFilled_ += takingOrder->quantity_;
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfAsks->first, takingOrder->quantity_);
-                    
-                    idToOrderMap.erase(takingOrder->id_);
-
-                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
-                    impl.memoryPool_.deallocate(clearedOrder);
-
-                    if (matchingLevel.empty())
-                    {
-                        askLevels.erase(topOfAsks);
-                    }
-                }
-            }
-            else 
-            {
-                break;
-            }
-        }
+        subResult.status_ = SubmitStatus::KILLED;
+        return subResult;
     }
-    else
+
+    Quantity remainingShares = limitRequest.quantity_;
+
+    while (remainingShares > 0)
     {
-        if (!check_available_liquidity<S>(bidLevels, limitRequest.price_, limitRequest.quantity_))
+        std::optional<Price> bestPrice = matchingLevels.get_best_price();
+
+        if (bestPrice.has_value() && crosses<S>(limitRequest.price_, *bestPrice))
         {
-            subResult.status_ = SubmitStatus::KILLED;
-            return subResult;
+            core::PriceLevel& matchingLevel = *(matchingLevels.get_level_at_price(*bestPrice));
+
+            core::RestingOrder* takingOrder = matchingLevel.front();
+            OrderID takingOrderID = takingOrder->id_;
+            Quantity takingOrderQuantity = takingOrder->quantity_;
+
+            if (takingOrderQuantity > remainingShares)
+            {
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, remainingShares);
+                matchingLevel.take_shares_from_first(remainingShares);
+
+                subResult.quantityFilled_ += remainingShares;
+                subResult.status_ = SubmitStatus::FILLED;
+
+                return subResult;
+            }
+            else
+            {
+                subResult.executions_.emplace_back(takingOrderID, *bestPrice, takingOrderQuantity);
+                subResult.quantityFilled_ += takingOrderQuantity;
+
+                idToOrderMap.erase(takingOrderID);
+
+                remainingShares -= takingOrderQuantity;
+
+                core::RestingOrder* clearedOrder = matchingLevel.pop_front();
+                impl.memoryPool_.deallocate(clearedOrder);
+
+                if (matchingLevel.empty())
+                {
+                    matchingLevels.update_best_price_from_given(*bestPrice);
+                }
+            }
         }
-
-        while (remainingShares > 0 && !bidLevels.empty())
+        else
         {
-            auto topOfBids = bidLevels.begin();
-
-            if (crosses<Side::SELL>(limitRequest.price_, topOfBids->first))
-            {
-                core::PriceLevel& matchingLevel = topOfBids->second;
-
-                core::RestingOrder* takingOrder = matchingLevel.front();
-                assert(takingOrder != nullptr);
-
-                if (takingOrder->quantity_ > remainingShares)
-                {
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, remainingShares);
-                    matchingLevel.take_shares_from_first(remainingShares);
-
-                    subResult.quantityFilled_ += remainingShares;
-                    subResult.status_ = SubmitStatus::FILLED;
-
-                    return subResult;
-                }
-                else
-                {
-                    remainingShares -= takingOrder->quantity_;
-            
-                    subResult.quantityFilled_ += takingOrder->quantity_;
-                    subResult.executions_.emplace_back(takingOrder->id_, topOfBids->first, takingOrder->quantity_);
-                    
-                    idToOrderMap.erase(takingOrder->id_);
-
-                    core::RestingOrder* clearedOrder = matchingLevel.pop_front();
-
-                    impl.memoryPool_.deallocate(clearedOrder);
-
-                    if (matchingLevel.empty())
-                    {
-                        bidLevels.erase(topOfBids);
-                    }
-                }
-            }
-            else 
-            {
-                break;
-            }
+            break;
         }
     }
 
@@ -800,42 +604,16 @@ SubmissionResult OrderBook::submit_limit_order_fok(const LimitOrderRequest& limi
     return subResult;
 }
 
-template<typename LevelMap>
-void OrderBook::prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult)
-{
-    for (auto it = levelMap.begin(); it != levelMap.end();)
-    {
-        core::PriceLevel& level = it->second;
-
-        const core::LevelPruneStats levelStats = level.prune_day_orders([&](core::RestingOrder* order)
-                                                 {
-                                                    retire_order(order);
-                                                 });
-
-        dayResult.ordersPruned += levelStats.ordersPruned_;
-        dayResult.sharesErased += levelStats.quantityPruned_;
-
-        if (level.empty())
-        {
-            it = levelMap.erase(it);
-            dayResult.priceLevelsErased++;
-        }
-        else
-        {
-            it++;
-        }
-    }
-}
-
 DayOrderPruneResult OrderBook::on_session_end()
 {
-    auto& bidLevels = pImpl_->bidLevels_;
-    auto& askLevels = pImpl_->askLevels_;
+    auto retireOrder = [&](core::RestingOrder* order)
+                       {
+                            retire_order(order);     
+                       };
 
     DayOrderPruneResult sessionResult;
-
-    prune_from_side_map(bidLevels, sessionResult);
-    prune_from_side_map(askLevels, sessionResult);
+    pImpl_->bidLevels_.prune_day_orders(sessionResult, retireOrder);
+    pImpl_->askLevels_.prune_day_orders(sessionResult, retireOrder);
 
     return sessionResult;
 }
