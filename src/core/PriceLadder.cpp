@@ -92,7 +92,7 @@ void PriceLadder::update_best_price_from_given(Price startingPrice)
     else
     {
         std::size_t numLevels = levels_.size();
-        for (std::size_t i = startingIndex; i < numLevels; i++)
+        for (std::size_t i = startingIndex; i < numLevels; ++i)
         {
             if (!levels_[i].empty())
             {
@@ -103,7 +103,6 @@ void PriceLadder::update_best_price_from_given(Price startingPrice)
     }
 
     bestPrice_ = std::nullopt;
-    return;
 }
 
 bool PriceLadder::has_sufficient_marketable_liquidity(Price thresholdPrice,
@@ -111,7 +110,7 @@ bool PriceLadder::has_sufficient_marketable_liquidity(Price thresholdPrice,
                                                      ) const
 {
     assert(requiredLiquidity > 0);
-    assert(thresholdPrice <= maxPrice && thresholdPrice >= minPrice);
+    assert(thresholdPrice <= maxPrice_ && thresholdPrice >= minPrice_);
 
     if (!bestPrice_.has_value())
     {
@@ -177,6 +176,11 @@ bool PriceLadder::has_sufficient_marketable_liquidity(Price thresholdPrice,
 bool PriceLadder::has_liquidity_at_price(Price price) const
 {
     return !levels_[static_cast<std::size_t>(price - minPrice_)].empty();
+}
+
+bool PriceLadder::empty() const
+{
+    return !bestPrice_.has_value();
 }
 
 } // namespace lob::core
