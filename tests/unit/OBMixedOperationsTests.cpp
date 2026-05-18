@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include "lob/Aliases.hpp"
-#include "lob/DayOrderPruneResult.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Results.hpp"
@@ -14,13 +13,15 @@
 using namespace lob;
 
 constexpr std::size_t initialSlabSize = 10;
+constexpr Price minPrice = 0;
+constexpr Price maxPrice = 200000;
 constexpr Price defaultPrice = 10000;
 
 class OBInvariantTest : public testing::Test
 {
 protected:
     OBInvariantTest()
-        : ob_{initialSlabSize}
+        : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}}
     {
     }
 
