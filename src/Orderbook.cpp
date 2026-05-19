@@ -104,6 +104,26 @@ std::size_t OrderBook::get_num_shares_at_level(Price level, Side side) const
     }
 }
 
+std::optional<Price> OrderBook::get_best_bid_price() const
+{
+    return pImpl_->bidLevels_.get_best_price();
+}
+
+std::optional<Price> OrderBook::get_best_ask_price() const
+{
+    return pImpl_->askLevels_.get_best_price();
+}
+
+std::vector<std::pair<Price, Volume>> OrderBook::get_top_bid_levels(std::size_t depth) const
+{
+    return pImpl_->bidLevels_.get_top_levels(depth);
+}
+
+std::vector<std::pair<Price, Volume>> OrderBook::get_top_ask_levels(std::size_t depth) const
+{
+    return pImpl_->askLevels_.get_top_levels(depth);
+}
+
 bool OrderBook::check_level_exists(Price level, Side side) const
 {
     if (side == Side::BUY)
@@ -128,25 +148,21 @@ bool OrderBook::replay_add_visible_order(OrderID id, Price price, Quantity quant
         return false;
     }
 
-    core::RestingOrder* orderToRest =
-        impl.memoryPool_.allocate(
-            id,
-            quantity,
-            core::RestingLifetime::GTC,
-            side
-        );
+    core::RestingOrder* orderToRest = impl.memoryPool_.allocate(
+                                          id,
+                                          quantity,
+                                          core::RestingLifetime::GTC,
+                                          side
+                                      );
 
-    core::PriceLadder& restingLevels =
-        (side == Side::BUY) ? impl.bidLevels_ : impl.askLevels_;
+    core::PriceLadder& restingLevels = (side == Side::BUY) ? impl.bidLevels_ : impl.askLevels_;
 
-    core::PriceLevel& restingLevel =
-        *restingLevels.get_level_at_price(price);
+    core::PriceLevel& restingLevel = *restingLevels.get_level_at_price(price);
 
     restingLevel.push_back(orderToRest);
     impl.idToOrderMap_.emplace(id, orderToRest);
 
-    const std::optional<Price> currentBestPrice =
-        restingLevels.get_best_price();
+    const std::optional<Price> currentBestPrice = restingLevels.get_best_price();
 
     if (!currentBestPrice.has_value() ||
         (side == Side::BUY && price > *currentBestPrice) ||
@@ -196,8 +212,7 @@ bool OrderBook::replay_reduce_visible_order(OrderID id, Quantity quantityReduced
 
 bool OrderBook::replay_delete_visible_order(OrderID id)
 {
-    const CancelResult cancelResult =
-        cancel_order(CancelOrderRequest{id});
+    const CancelResult cancelResult = cancel_order(CancelOrderRequest{id});
 
     return cancelResult.status_ == CancelStatus::CANCELED;
 }
