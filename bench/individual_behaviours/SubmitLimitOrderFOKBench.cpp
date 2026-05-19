@@ -2,6 +2,7 @@
 
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
+#include "lob/OrderBookConfig.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
@@ -18,7 +19,7 @@ static void BM_SubmitFOKNoFill(benchmark::State& state)
     for (auto _ : state)
     {
         state.PauseTiming();
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
         state.ResumeTiming();
 
         for (std::size_t i = 0; i < batchSize; ++i)
@@ -52,7 +53,11 @@ static void BM_SubmitFOKKilledAfterScan(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize * ScanDepth + 1024};
+        OrderBook ob{OrderBookConfig{
+            batchSize * ScanDepth + 1024, 
+            10000, 
+            static_cast<Price>(10'000 + ScanDepth - 1)
+        }};
 
         for (std::size_t i = 0; i < ScanDepth; ++i)
         {
@@ -97,7 +102,7 @@ static void BM_SubmitFOKSameLevelFullFill(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -148,7 +153,12 @@ static void BM_SubmitFOKSweepLevels(benchmark::State& state)
         state.PauseTiming();
 
         const std::size_t restingOrderCount = batchSize * SweepDepth;
-        OrderBook ob{restingOrderCount + 1024};
+
+        OrderBook ob{OrderBookConfig{
+            restingOrderCount + 1024, 
+            10000, 
+            static_cast<Price>(10'000 + restingOrderCount - 1)
+        }};
 
         for (std::size_t i = 0; i < restingOrderCount; ++i)
         {

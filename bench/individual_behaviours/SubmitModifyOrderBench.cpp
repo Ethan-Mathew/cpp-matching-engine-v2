@@ -2,6 +2,7 @@
 
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
+#include "lob/OrderBookConfig.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
@@ -18,7 +19,7 @@ static void BM_ModifyMissingEmptyBook(benchmark::State& state)
     for (auto _ : state)
     {
         state.PauseTiming();
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
         state.ResumeTiming();
 
         for (std::size_t i = 0; i < batchSize; ++i)
@@ -47,7 +48,7 @@ static void BM_ModifyToZeroQuantity(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -90,7 +91,7 @@ static void BM_ModifySamePriceSameQuantity(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -133,7 +134,7 @@ static void BM_ModifyToNewNonCrossingPrice(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 101}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -176,7 +177,7 @@ static void BM_ModifyToAggressiveFullFill(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{(batchSize * 2) + 1024};
+        OrderBook ob{OrderBookConfig{(batchSize * 2) + 1024, 1, 10}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -232,7 +233,7 @@ static void BM_ModifyToAggressivePartialFillRest(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{(batchSize * 2) + 1024};
+        OrderBook ob{OrderBookConfig{(batchSize * 2) + 1024, 1, 10}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {

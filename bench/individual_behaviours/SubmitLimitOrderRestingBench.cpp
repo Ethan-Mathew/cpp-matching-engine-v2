@@ -2,6 +2,7 @@
 
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
+#include "lob/OrderBookConfig.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
@@ -18,7 +19,7 @@ static void BM_SubmitRestingSameLevel(benchmark::State& state)
     for (auto _ : state)
     {
         state.PauseTiming();
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
         state.ResumeTiming();
 
         for (std::size_t i = 0; i < batchSize; i++)
@@ -48,7 +49,7 @@ static void BM_SubmitRestingDiffLevels(benchmark::State& state)
     for (auto _ : state)
     {
         state.PauseTiming();
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, static_cast<Price>(batchSize)}};
         state.ResumeTiming();
 
         for (std::size_t i = 0; i < batchSize; i++)
@@ -79,9 +80,8 @@ static void BM_SubmitRestingDiffLevelsFixedSpread(benchmark::State& state)
     for (auto _ : state)
     {
         state.PauseTiming();
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, static_cast<Price>(Spread)}};
         state.ResumeTiming();
-
 
         for (std::size_t i = 0; i < batchSize; i++)
         {

@@ -2,6 +2,7 @@
 
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
+#include "lob/OrderBookConfig.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
@@ -19,7 +20,7 @@ static void BM_SessionEndAllGTCSameLevel(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -52,7 +53,7 @@ static void BM_SessionEndAllDAYSameLevel(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -85,7 +86,7 @@ static void BM_SessionEndMixedSameLevel(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -120,7 +121,7 @@ static void BM_SessionEndAllGTCUniqueLevels(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, static_cast<Price>(batchSize)}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -153,7 +154,7 @@ static void BM_SessionEndAllDAYUniqueLevels(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, static_cast<Price>(batchSize)}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -187,7 +188,7 @@ static void BM_SessionEndMixedUniqueLevels(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{orderCount + 1024};
+        OrderBook ob{OrderBookConfig{orderCount + 1024, 1, static_cast<Price>(levelCount)}};
 
         for (std::size_t i = 1; i <= levelCount; ++i)
         {
