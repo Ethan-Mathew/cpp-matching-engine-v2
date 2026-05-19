@@ -34,6 +34,11 @@ public:
     
     bool check_level_exists(Price level, Side side) const;
 
+    bool replay_add_visible_order(OrderID id, Price price, Quantity quantity, Side side);
+    bool replay_reduce_visible_order(OrderID id, Quantity quantityReduced);
+    bool replay_delete_visible_order(OrderID id);
+    bool replay_replace_visible_order(OrderID originalId, OrderID newId, Price newPrice, Quantity newQuantity);
+
 private:
     template<Side S>
     bool crosses(Price orderPrice, Price levelPrice) const;

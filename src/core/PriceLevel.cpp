@@ -108,6 +108,16 @@ void PriceLevel::take_shares_from_first(Quantity sharesTaken)
     totalVolume_ -= sharesTaken;
 }
 
+void PriceLevel::reduce_order_quantity(RestingOrder* order, Quantity quantityReduced)
+{
+    assert(order);
+    assert(order->level_ == this);
+    assert(quantityReduced <= order->quantity_);
+
+    order->quantity_ -= quantityReduced;
+    totalVolume_ -= quantityReduced;
+}
+
 RestingOrder* PriceLevel::front()
 {
     return head_;
