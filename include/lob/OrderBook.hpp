@@ -31,9 +31,8 @@ public:
     std::size_t get_memory_pool_curr_alloc() const;
     std::size_t get_num_orders_at_level(Price level, Side side) const;
     std::size_t get_num_shares_at_level(Price level, Side side) const;
+    
     bool check_level_exists(Price level, Side side) const;
-
-    void assert_valid() const;
 
 private:
     template<Side S>
