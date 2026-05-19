@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <array>
 #include <cstddef>
+#include <iomanip>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -212,6 +213,7 @@ void ItchReplayEngine::print_summary(std::ostream& out, std::size_t depth) const
     const std::optional<Price> bestAsk = ob_.get_best_ask_price();
 
     out << "\nTop of book:\n";
+    out << std::fixed << std::setprecision(4);
 
     if (bestBid.has_value())
     {
