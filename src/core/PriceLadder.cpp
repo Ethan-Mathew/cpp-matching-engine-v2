@@ -19,10 +19,19 @@ PriceLadder::PriceLadder(Price minPrice, Price maxPrice, Side side)
     : minPrice_{minPrice},
       maxPrice_{maxPrice},
       side_{side},
-      levels_(static_cast<std::size_t>(maxPrice - minPrice + 1)),
       bestPrice_{std::nullopt}
 {
     assert(maxPrice_ >= minPrice_);
+
+    const std::size_t levelCount =
+        static_cast<std::size_t>(maxPrice_ - minPrice_ + 1);
+
+    levels_.reserve(levelCount);
+
+    for (std::size_t i = 0; i < levelCount; ++i)
+    {
+        levels_.emplace_back(minPrice_ + static_cast<Price>(i));
+    }
 }
 
 Side PriceLadder::get_side()
@@ -55,6 +64,58 @@ std::size_t PriceLadder::get_num_non_empty_levels()
     });
 
     return nonEmptyLevelsCount;
+}
+
+std::vector<std::pair<Price, Volume>> PriceLadder::get_top_levels(std::size_t depth) const
+{
+    std::vector<std::pair<Price, Volume>> result;
+
+    if (depth == 0 || !bestPrice_.has_value())
+    {
+        return result;
+    }
+
+    const std::size_t bestIndex = static_cast<std::size_t>(*bestPrice_ - minPrice_);
+
+    if (side_ == Side::BUY)
+    {
+        std::size_t i = bestIndex;
+
+        while (true)
+        {
+            if (!levels_[i].empty())
+            {
+                result.emplace_back(static_cast<Price>(i) + minPrice_, levels_[i].get_total_volume());
+
+                if (result.size() == depth)
+                {
+                    break;
+                }
+            }
+
+            if (i == 0)
+            {
+                break;
+            }
+
+            --i;
+        }
+    }
+    else
+    {
+        for (std::size_t i = bestIndex; 
+             (i < levels_.size()) && (result.size() < depth);
+             ++i
+            )
+        {
+            if (!levels_[i].empty())
+            {
+                result.emplace_back(static_cast<Price>(i) + minPrice_, levels_[i].get_total_volume());
+            }
+        }
+    }
+
+    return result;
 }
 
 void PriceLadder::set_best_price(Price price)

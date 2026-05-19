@@ -30,6 +30,7 @@ public:
     RemoveOrderResult remove_order(RestingOrder* order);
 
     void take_shares_from_first(Quantity sharesTaken);
+    void reduce_order_quantity(RestingOrder* order, Quantity quantityReduced);
 
     template <typename OnPrunedOrder>
     LevelPruneStats prune_day_orders(OnPrunedOrder&& onPrunedOrder);

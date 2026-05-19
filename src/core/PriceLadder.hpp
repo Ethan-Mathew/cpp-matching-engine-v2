@@ -7,6 +7,7 @@
 
 #include <cstddef>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace lob::core
@@ -21,6 +22,7 @@ public:
     std::optional<Price> get_best_price();
     PriceLevel* get_level_at_price(Price price);
     std::size_t get_num_non_empty_levels();
+    std::vector<std::pair<Price, Volume>> get_top_levels(std::size_t depth) const;
 
     void set_best_price(Price price);
     void update_best_price_from_given(Price startingPrice);

@@ -104,6 +104,26 @@ std::size_t OrderBook::get_num_shares_at_level(Price level, Side side) const
     }
 }
 
+std::optional<Price> OrderBook::get_best_bid_price() const
+{
+    return pImpl_->bidLevels_.get_best_price();
+}
+
+std::optional<Price> OrderBook::get_best_ask_price() const
+{
+    return pImpl_->askLevels_.get_best_price();
+}
+
+std::vector<std::pair<Price, Volume>> OrderBook::get_top_bid_levels(std::size_t depth) const
+{
+    return pImpl_->bidLevels_.get_top_levels(depth);
+}
+
+std::vector<std::pair<Price, Volume>> OrderBook::get_top_ask_levels(std::size_t depth) const
+{
+    return pImpl_->askLevels_.get_top_levels(depth);
+}
+
 bool OrderBook::check_level_exists(Price level, Side side) const
 {
     if (side == Side::BUY)
@@ -114,6 +134,121 @@ bool OrderBook::check_level_exists(Price level, Side side) const
     {
         return !(pImpl_->askLevels_.get_level_at_price(level)->empty());
     }
+}
+
+bool OrderBook::replay_add_visible_order(OrderID id, Price price, Quantity quantity, Side side)
+{
+    Impl& impl = *pImpl_;
+
+    if (quantity == 0 ||
+        impl.idToOrderMap_.contains(id) ||
+        price < impl.minPrice_ ||
+        price > impl.maxPrice_)
+    {
+        return false;
+    }
+
+    core::RestingOrder* orderToRest = impl.memoryPool_.allocate(
+                                          id,
+                                          quantity,
+                                          core::RestingLifetime::GTC,
+                                          side
+                                      );
+
+    core::PriceLadder& restingLevels = (side == Side::BUY) ? impl.bidLevels_ : impl.askLevels_;
+
+    core::PriceLevel& restingLevel = *restingLevels.get_level_at_price(price);
+
+    restingLevel.push_back(orderToRest);
+    impl.idToOrderMap_.emplace(id, orderToRest);
+
+    const std::optional<Price> currentBestPrice = restingLevels.get_best_price();
+
+    if (!currentBestPrice.has_value() ||
+        (side == Side::BUY && price > *currentBestPrice) ||
+        (side == Side::SELL && price < *currentBestPrice))
+    {
+        restingLevels.set_best_price(price);
+    }
+
+    return true;
+}
+
+bool OrderBook::replay_reduce_visible_order(OrderID id, Quantity quantityReduced)
+{
+    Impl& impl = *pImpl_;
+
+    if (quantityReduced == 0)
+    {
+        return false;
+    }
+
+    auto it = impl.idToOrderMap_.find(id);
+
+    if (it == impl.idToOrderMap_.end())
+    {
+        return false;
+    }
+
+    core::RestingOrder* order = it->second;
+
+    if (quantityReduced > order->quantity_)
+    {
+        return false;
+    }
+
+    if (quantityReduced == order->quantity_)
+    {
+        return replay_delete_visible_order(id);
+    }
+
+    core::PriceLevel* level = order->level_;
+    assert(level);
+
+    level->reduce_order_quantity(order, quantityReduced);
+
+    return true;
+}
+
+bool OrderBook::replay_delete_visible_order(OrderID id)
+{
+    const CancelResult cancelResult = cancel_order(CancelOrderRequest{id});
+
+    return cancelResult.status_ == CancelStatus::CANCELED;
+}
+
+bool OrderBook::replay_replace_visible_order(OrderID originalId, OrderID newId, Price newPrice, Quantity newQuantity)
+{
+    Impl& impl = *pImpl_;
+
+    if (newQuantity == 0 ||
+        newPrice < impl.minPrice_ ||
+        newPrice > impl.maxPrice_ ||
+        impl.idToOrderMap_.contains(newId))
+    {
+        return false;
+    }
+
+    auto it = impl.idToOrderMap_.find(originalId);
+
+    if (it == impl.idToOrderMap_.end())
+    {
+        return false;
+    }
+
+    const Side originalSide = it->second->side_;
+
+    if (!replay_delete_visible_order(originalId))
+    {
+        return false;
+    }
+
+    return replay_add_visible_order(
+        newId,
+        newPrice,
+        newQuantity,
+        originalSide
+    );
 }
 
 template<Side S>

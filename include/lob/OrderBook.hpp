@@ -7,6 +7,9 @@
 
 #include <cstddef>
 #include <memory>
+#include <optional>
+#include <utility>
+#include <vector>
 
 namespace lob
 {
@@ -31,8 +34,17 @@ public:
     std::size_t get_memory_pool_curr_alloc() const;
     std::size_t get_num_orders_at_level(Price level, Side side) const;
     std::size_t get_num_shares_at_level(Price level, Side side) const;
-    
+    std::optional<Price> get_best_bid_price() const;
+    std::optional<Price> get_best_ask_price() const;
+    std::vector<std::pair<Price, Volume>> get_top_bid_levels(std::size_t depth) const;
+    std::vector<std::pair<Price, Volume>> get_top_ask_levels(std::size_t depth) const;  
+
     bool check_level_exists(Price level, Side side) const;
+
+    bool replay_add_visible_order(OrderID id, Price price, Quantity quantity, Side side);
+    bool replay_reduce_visible_order(OrderID id, Quantity quantityReduced);
+    bool replay_delete_visible_order(OrderID id);
+    bool replay_replace_visible_order(OrderID originalId, OrderID newId, Price newPrice, Quantity newQuantity);
 
 private:
     template<Side S>
