@@ -3,6 +3,7 @@
 /build-sanitize
 /build-bench
 /.vscode
+/data
 
 # Prerequisites
 *.d
