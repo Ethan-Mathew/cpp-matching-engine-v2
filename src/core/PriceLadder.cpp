@@ -19,10 +19,19 @@ PriceLadder::PriceLadder(Price minPrice, Price maxPrice, Side side)
     : minPrice_{minPrice},
       maxPrice_{maxPrice},
       side_{side},
-      levels_(static_cast<std::size_t>(maxPrice - minPrice + 1)),
       bestPrice_{std::nullopt}
 {
     assert(maxPrice_ >= minPrice_);
+
+    const std::size_t levelCount =
+        static_cast<std::size_t>(maxPrice_ - minPrice_ + 1);
+
+    levels_.reserve(levelCount);
+
+    for (std::size_t i = 0; i < levelCount; ++i)
+    {
+        levels_.emplace_back(minPrice_ + static_cast<Price>(i));
+    }
 }
 
 Side PriceLadder::get_side()
