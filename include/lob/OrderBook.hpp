@@ -1,12 +1,15 @@
 #pragma once
 
 #include "Aliases.hpp"
-#include "DayOrderPruneResult.hpp"
+#include "OrderBookConfig.hpp"
 #include "Requests.hpp"
 #include "Results.hpp"
 
 #include <cstddef>
 #include <memory>
+#include <optional>
+#include <utility>
+#include <vector>
 
 namespace lob
 {
@@ -14,7 +17,7 @@ namespace lob
 class OrderBook
 {
 public:
-    OrderBook(std::size_t poolSize);
+    explicit OrderBook(const OrderBookConfig& config);
     ~OrderBook();
 
     SubmissionResult submit_limit_order(const LimitOrderRequest& limitRequest);
@@ -31,9 +34,17 @@ public:
     std::size_t get_memory_pool_curr_alloc() const;
     std::size_t get_num_orders_at_level(Price level, Side side) const;
     std::size_t get_num_shares_at_level(Price level, Side side) const;
+    std::optional<Price> get_best_bid_price() const;
+    std::optional<Price> get_best_ask_price() const;
+    std::vector<std::pair<Price, Volume>> get_top_bid_levels(std::size_t depth) const;
+    std::vector<std::pair<Price, Volume>> get_top_ask_levels(std::size_t depth) const;  
+
     bool check_level_exists(Price level, Side side) const;
 
-    void assert_valid() const;
+    bool replay_add_visible_order(OrderID id, Price price, Quantity quantity, Side side);
+    bool replay_reduce_visible_order(OrderID id, Quantity quantityReduced);
+    bool replay_delete_visible_order(OrderID id);
+    bool replay_replace_visible_order(OrderID originalId, OrderID newId, Price newPrice, Quantity newQuantity);
 
 private:
     template<Side S>
@@ -44,9 +55,6 @@ private:
 
     template<typename RestingOrderType>
     void retire_order(RestingOrderType* order);
-
-    template<typename LevelMap>
-    void prune_from_side_map(LevelMap& levelMap, DayOrderPruneResult& dayResult);
 
     template<Side S>
     SubmissionResult submit_limit_order_resting(const LimitOrderRequest& limitRequest);

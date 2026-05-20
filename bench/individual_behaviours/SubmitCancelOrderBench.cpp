@@ -2,6 +2,7 @@
 
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
+#include "lob/OrderBookConfig.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
@@ -18,7 +19,7 @@ static void BM_CancelMissingEmptyBook(benchmark::State& state)
     for (auto _ : state)
     {
         state.PauseTiming();
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
         state.ResumeTiming();
 
         for (std::size_t i = 0; i < batchSize; ++i)
@@ -43,7 +44,7 @@ static void BM_CancelMissingPopulatedBook(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 0; i < batchSize; ++i)
         {
@@ -82,7 +83,7 @@ static void BM_CancelSameLevelHead(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -121,7 +122,7 @@ static void BM_CancelSameLevelTail(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {
@@ -166,7 +167,7 @@ static void BM_CancelSameLevelMiddle(benchmark::State& state)
         state.PauseTiming();
 
         const std::size_t restingOrderCount = batchSize * 3;
-        OrderBook ob{restingOrderCount + 1024};
+        OrderBook ob{OrderBookConfig{restingOrderCount + 1024, 1, 1}};
 
         for (std::size_t i = 1; i <= restingOrderCount; ++i)
         {
@@ -206,7 +207,7 @@ static void BM_CancelUniqueLevels(benchmark::State& state)
     {
         state.PauseTiming();
 
-        OrderBook ob{batchSize + 1024};
+        OrderBook ob{OrderBookConfig{batchSize + 1024, 1, static_cast<Price>(batchSize)}};
 
         for (std::size_t i = 1; i <= batchSize; ++i)
         {

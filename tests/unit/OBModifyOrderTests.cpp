@@ -14,13 +14,15 @@
 using namespace lob;
 
 constexpr std::size_t initialSlabSize = 10;
+constexpr Price minPrice = 0;
+constexpr Price maxPrice = 200000;
 constexpr Price defaultPrice = 10000;
 
 class OBModifyOrderTest : public testing::Test
 {
 protected:
     OBModifyOrderTest()
-        : ob_{initialSlabSize}
+        : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}}
     {
     }
 

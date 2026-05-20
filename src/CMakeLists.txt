@@ -1,5 +1,6 @@
 add_library(OrderBook
     Orderbook.cpp
+    core/PriceLadder.cpp
     core/PriceLevel.cpp
     core/MemoryPool.cpp
 )

@@ -51,6 +51,7 @@ enum class ModificationStatus : std::uint8_t
 {
     RESUBMITTED,
     CANCELED,
+    REJECTED,
     NOT_FOUND,
     COUNT
 };
@@ -60,6 +61,13 @@ struct ModificationResult
     Quantity originalQuantity_ = 0;
     ModificationStatus status_;
     std::optional<SubmissionResult> resubmissionResult_;
+};
+
+struct DayOrderPruneResult
+{
+    Volume sharesErased             = 0;
+    std::uint64_t ordersPruned      = 0;
+    std::uint32_t priceLevelsErased = 0;
 };
 
 } // namespace lob
