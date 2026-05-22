@@ -81,10 +81,7 @@ bucket_summary = pd.DataFrame({
 
 fig, ax = plt.subplots(figsize=(14, 7))
 
-ax.bar(
-    bucket_summary["Bucket"],
-    bucket_summary["Count"]
-)
+ax.bar(bucket_summary["Bucket"], bucket_summary["Count"])
 
 ax.set_yscale("log")
 ax.set_xlabel("Latency Bucket")
@@ -105,16 +102,8 @@ for index, row in bucket_summary.iterrows():
         )
 
 fig.tight_layout()
-fig.savefig(
-    output_dir / "resting_limit_submission_latency_buckets.png",
-    dpi=200
-)
+fig.savefig(output_dir / "resting_limit_submission_latency_buckets.png", dpi=200)
 plt.close(fig)
-
-
-# ---------------------------------------------------------------------
-# 2. CCDF tail plot
-# ---------------------------------------------------------------------
 
 value_counts = latencies.value_counts().sort_index()
 
@@ -123,11 +112,7 @@ tail_probability = tail_counts / len(latencies)
 
 fig, ax = plt.subplots(figsize=(12, 6))
 
-ax.step(
-    value_counts.index,
-    tail_probability,
-    where="post"
-)
+ax.step(value_counts.index, tail_probability, where="post")
 
 ax.axvline(p50, linestyle="--", linewidth=1, label=f"p50 = {p50:.0f} ns")
 ax.axvline(p99, linestyle="--", linewidth=1, label=f"p99 = {p99:.0f} ns")
@@ -147,10 +132,7 @@ ax.set_title("Resting Limit Submission Latency Tail Distribution")
 ax.legend()
 
 fig.tight_layout()
-fig.savefig(
-    output_dir / "resting_limit_submission_latency_ccdf.png",
-    dpi=200
-)
+fig.savefig(output_dir / "resting_limit_submission_latency_ccdf.png", dpi=200)
 plt.close(fig)
 
 body_cutoff = p99
@@ -158,10 +140,7 @@ body_latencies = latencies[latencies <= body_cutoff]
 
 fig, ax = plt.subplots(figsize=(12, 6))
 
-ax.hist(
-    body_latencies,
-    bins=100
-)
+ax.hist(body_latencies, bins=100)
 
 ax.axvline(p50, linestyle="--", linewidth=1, label=f"p50 = {p50:.0f} ns")
 ax.axvline(p90, linestyle="--", linewidth=1, label=f"p90 = {p90:.0f} ns")
@@ -173,8 +152,5 @@ ax.set_title("Resting Limit Submission Latency Distribution Through p99")
 ax.legend()
 
 fig.tight_layout()
-fig.savefig(
-    output_dir / "resting_limit_submission_latency_body_p99.png",
-    dpi=200
-)
+fig.savefig(output_dir / "resting_limit_submission_latency_body_p99.png", dpi=200)
 plt.close(fig)
