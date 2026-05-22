@@ -15,3 +15,4 @@ FetchContent_MakeAvailable(
 )
 
 add_subdirectory(individual_behaviours)
+add_subdirectory(latency)
