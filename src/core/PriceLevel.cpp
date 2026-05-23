@@ -1,29 +1,21 @@
-#include "lob/Aliases.hpp"
-
-#include "LevelPruneStats.hpp"
 #include "PriceLevel.hpp"
-#include "RestingOrder.hpp"
 
 #include <cassert>
 #include <cstdint>
 
-namespace lob::core
-{
+#include "LevelPruneStats.hpp"
+#include "RestingOrder.hpp"
+#include "lob/Aliases.hpp"
 
-PriceLevel::PriceLevel(lob::Price price)
-    : price_{price}
-{
-}
+namespace lob::core {
 
-void PriceLevel::push_back(RestingOrder* newOrder)
-{
-    if (tail_)
-    {
+PriceLevel::PriceLevel(lob::Price price) : price_{price} {}
+
+void PriceLevel::push_back(RestingOrder* newOrder) {
+    if (tail_) {
         newOrder->prev_ = tail_;
         tail_->next_ = newOrder;
-    }
-    else
-    {
+    } else {
         head_ = newOrder;
     }
 
@@ -35,22 +27,17 @@ void PriceLevel::push_back(RestingOrder* newOrder)
     orderCount_++;
 }
 
-RestingOrder* PriceLevel::pop_front()
-{
-    if (!head_)
-    {
-        return nullptr; 
+RestingOrder* PriceLevel::pop_front() {
+    if (!head_) {
+        return nullptr;
     }
 
     RestingOrder* retOrder = head_;
 
-    if (head_->next_)
-    {
+    if (head_->next_) {
         head_ = head_->next_;
         head_->prev_ = nullptr;
-    }
-    else
-    {
+    } else {
         head_ = nullptr;
         tail_ = nullptr;
     }
@@ -65,8 +52,7 @@ RestingOrder* PriceLevel::pop_front()
     return retOrder;
 }
 
-PriceLevel::RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
-{
+PriceLevel::RemoveOrderResult PriceLevel::remove_order(RestingOrder* order) {
     assert(head_);
     assert(order);
     assert(order->level_ == this);
@@ -74,21 +60,15 @@ PriceLevel::RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
     RestingOrder* prev = order->prev_;
     RestingOrder* next = order->next_;
 
-    if (prev)
-    {
+    if (prev) {
         prev->next_ = next;
-    }
-    else
-    {
+    } else {
         head_ = next;
     }
 
-    if (next)
-    {
+    if (next) {
         next->prev_ = prev;
-    }
-    else
-    {
+    } else {
         tail_ = prev;
     }
 
@@ -102,14 +82,12 @@ PriceLevel::RemoveOrderResult PriceLevel::remove_order(RestingOrder* order)
     return empty() ? RemoveOrderResult::EMPTY : RemoveOrderResult::NON_EMPTY;
 }
 
-void PriceLevel::take_shares_from_first(Quantity sharesTaken)
-{
+void PriceLevel::take_shares_from_first(Quantity sharesTaken) {
     head_->quantity_ -= sharesTaken;
     totalVolume_ -= sharesTaken;
 }
 
-void PriceLevel::reduce_order_quantity(RestingOrder* order, Quantity quantityReduced)
-{
+void PriceLevel::reduce_order_quantity(RestingOrder* order, Quantity quantityReduced) {
     assert(order);
     assert(order->level_ == this);
     assert(quantityReduced <= order->quantity_);
@@ -118,34 +96,16 @@ void PriceLevel::reduce_order_quantity(RestingOrder* order, Quantity quantityRed
     totalVolume_ -= quantityReduced;
 }
 
-RestingOrder* PriceLevel::front()
-{
-    return head_;
-}
+RestingOrder* PriceLevel::front() { return head_; }
 
-const RestingOrder* PriceLevel::front() const
-{
-    return head_;
-}
+const RestingOrder* PriceLevel::front() const { return head_; }
 
-bool PriceLevel::empty() const
-{
-    return orderCount_ == 0;
-}
+bool PriceLevel::empty() const { return orderCount_ == 0; }
 
-Price PriceLevel::get_price() const
-{
-    return price_;
-}
+Price PriceLevel::get_price() const { return price_; }
 
-Volume PriceLevel::get_total_volume() const
-{
-    return totalVolume_;
-}
+Volume PriceLevel::get_total_volume() const { return totalVolume_; }
 
-std::uint32_t PriceLevel::get_order_count() const
-{
-    return orderCount_;
-}
+std::uint32_t PriceLevel::get_order_count() const { return orderCount_; }
 
 } // namespace lob::core

@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
+
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Results.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
-
-#include <cstddef>
-#include <cstdint>
 
 using namespace lob;
 
@@ -17,42 +17,27 @@ constexpr Price minPrice = 0;
 constexpr Price maxPrice = 200000;
 constexpr Price defaultPrice = 10000;
 
-class OBInvariantTest : public testing::Test
-{
-protected:
-    OBInvariantTest()
-        : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}}
-    {
-    }
+class OBInvariantTest : public testing::Test {
+  protected:
+    OBInvariantTest() : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}} {}
 
-    static LimitOrderRequest make_limit_order(OrderID id,
-                                              Price price,
-                                              Quantity qty,
-                                              Side side,
-                                              TimeInForce tif = TimeInForce::GTC)
-    {
+    static LimitOrderRequest make_limit_order(OrderID id, Price price, Quantity qty, Side side,
+                                              TimeInForce tif = TimeInForce::GTC) {
         return LimitOrderRequest{id, price, qty, side, tif};
     }
 
-    static ModifyOrderRequest make_modify(OrderID id,
-                                          Quantity newQty,
-                                          Price newPrice)
-    {
+    static ModifyOrderRequest make_modify(OrderID id, Quantity newQty, Price newPrice) {
         return ModifyOrderRequest{id, newQty, newPrice};
     }
 
-    static CancelOrderRequest make_cancel(OrderID id)
-    {
-        return CancelOrderRequest{id};
-    }
+    static CancelOrderRequest make_cancel(OrderID id) { return CancelOrderRequest{id}; }
 
     OrderBook ob_;
 };
 
-TEST_F(OBInvariantTest, MixedOperationsLeaveConsistentObservableState)
-{
-    ob_.submit_limit_order(make_limit_order(1,  9990, 5, Side::BUY,  TimeInForce::GTC));
-    ob_.submit_limit_order(make_limit_order(2,  9980, 4, Side::BUY,  TimeInForce::DAY));
+TEST_F(OBInvariantTest, MixedOperationsLeaveConsistentObservableState) {
+    ob_.submit_limit_order(make_limit_order(1, 9990, 5, Side::BUY, TimeInForce::GTC));
+    ob_.submit_limit_order(make_limit_order(2, 9980, 4, Side::BUY, TimeInForce::DAY));
     ob_.submit_limit_order(make_limit_order(3, 10010, 6, Side::SELL, TimeInForce::GTC));
 
     ModificationResult modifyResult = ob_.modify_order(make_modify(1, 3, 10010));
@@ -79,8 +64,7 @@ TEST_F(OBInvariantTest, MixedOperationsLeaveConsistentObservableState)
     EXPECT_EQ(ob_.get_num_shares_at_level(10010, Side::SELL), 3);
 }
 
-TEST_F(OBInvariantTest, PoolAccountingTracksSubmitModifyCancelAndPruneFlows)
-{
+TEST_F(OBInvariantTest, PoolAccountingTracksSubmitModifyCancelAndPruneFlows) {
     SubmissionResult submit1 =
         ob_.submit_limit_order(make_limit_order(1, 9995, 5, Side::BUY, TimeInForce::GTC));
     ASSERT_EQ(submit1.status_, SubmitStatus::RESTING);

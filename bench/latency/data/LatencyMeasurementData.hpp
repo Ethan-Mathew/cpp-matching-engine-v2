@@ -1,11 +1,10 @@
 #pragma once
 
-#include "lob/Aliases.hpp"
-
 #include <cstddef>
 
-namespace bench::latency::data
-{
+#include "lob/Aliases.hpp"
+
+namespace bench::latency::data {
 
 static constexpr std::size_t itemsPerWarmup = 250'000;
 static constexpr std::size_t itemsPerMeasurement = 10'000'000;

@@ -2,13 +2,8 @@
 
 #include <cstdint>
 
-namespace lob
-{
+namespace lob {
 
-enum class Side : std::uint8_t
-{
-    BUY,
-    SELL
-};
+enum class Side : std::uint8_t { BUY, SELL };
 
 } // namespace lob

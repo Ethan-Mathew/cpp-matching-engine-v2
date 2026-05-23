@@ -1,22 +1,20 @@
 #pragma once
 
-#include "Aliases.hpp"
-#include "OrderBookConfig.hpp"
-#include "Requests.hpp"
-#include "Results.hpp"
-
 #include <cstddef>
 #include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
 
-namespace lob
-{
+#include "Aliases.hpp"
+#include "OrderBookConfig.hpp"
+#include "Requests.hpp"
+#include "Results.hpp"
 
-class OrderBook
-{
-public:
+namespace lob {
+
+class OrderBook {
+  public:
     explicit OrderBook(const OrderBookConfig& config);
     ~OrderBook();
 
@@ -37,34 +35,34 @@ public:
     std::optional<Price> get_best_bid_price() const;
     std::optional<Price> get_best_ask_price() const;
     std::vector<std::pair<Price, Volume>> get_top_bid_levels(std::size_t depth) const;
-    std::vector<std::pair<Price, Volume>> get_top_ask_levels(std::size_t depth) const;  
+    std::vector<std::pair<Price, Volume>> get_top_ask_levels(std::size_t depth) const;
 
     bool check_level_exists(Price level, Side side) const;
 
     bool replay_add_visible_order(OrderID id, Price price, Quantity quantity, Side side);
     bool replay_reduce_visible_order(OrderID id, Quantity quantityReduced);
     bool replay_delete_visible_order(OrderID id);
-    bool replay_replace_visible_order(OrderID originalId, OrderID newId, Price newPrice, Quantity newQuantity);
+    bool replay_replace_visible_order(OrderID originalId, OrderID newId, Price newPrice,
+                                      Quantity newQuantity);
 
-private:
-    template<Side S>
-    bool crosses(Price orderPrice, Price levelPrice) const;
+  private:
+    template <Side S> bool crosses(Price orderPrice, Price levelPrice) const;
 
     template <Side S, typename LevelMap>
-    bool check_available_liquidity(const LevelMap& levelMap, Price limitPrice, Quantity minimumQuantity) const;
+    bool check_available_liquidity(const LevelMap& levelMap, Price limitPrice,
+                                   Quantity minimumQuantity) const;
 
-    template<typename RestingOrderType>
-    void retire_order(RestingOrderType* order);
+    template <typename RestingOrderType> void retire_order(RestingOrderType* order);
 
-    template<Side S>
+    template <Side S>
     SubmissionResult submit_limit_order_resting(const LimitOrderRequest& limitRequest);
 
-    template<Side S>
+    template <Side S>
     SubmissionResult submit_limit_order_ioc(const LimitOrderRequest& limitRequest);
 
-    template<Side S>
+    template <Side S>
     SubmissionResult submit_limit_order_fok(const LimitOrderRequest& limitRequest);
-    
+
     struct Impl;
     std::unique_ptr<Impl> pImpl_;
 };

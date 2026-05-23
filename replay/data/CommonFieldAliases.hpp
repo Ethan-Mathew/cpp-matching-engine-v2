@@ -2,8 +2,7 @@
 
 #include <cstdint>
 
-namespace lob::replay::data
-{
+namespace lob::replay::data {
 
 using StockLocate = std::uint16_t;
 using TrackingNumber = std::uint16_t;

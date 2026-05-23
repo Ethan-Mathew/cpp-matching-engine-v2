@@ -1,20 +1,17 @@
 #pragma once
 
+#include "RestingLifetime.hpp"
 #include "lob/Aliases.hpp"
 #include "lob/Side.hpp"
 
-#include "RestingLifetime.hpp"
-
-namespace lob::core
-{
+namespace lob::core {
 
 class PriceLevel;
 
-struct RestingOrder
-{
+struct RestingOrder {
     RestingOrder* next_ = nullptr;
     RestingOrder* prev_ = nullptr;
-    PriceLevel* level_  = nullptr;
+    PriceLevel* level_ = nullptr;
 
     OrderID id_;
     Quantity quantity_;
@@ -24,25 +21,14 @@ struct RestingOrder
     RestingOrder() = delete;
 
     RestingOrder(OrderID id, Quantity quantity, RestingLifetime lifetime, Side side)
-        : id_{id}
-        , quantity_{quantity}
-        , lifetime_{lifetime}
-        , side_{side}
-    {
-    }
+        : id_{id}, quantity_{quantity}, lifetime_{lifetime}, side_{side} {}
 
     RestingOrder(const RestingOrder&) = delete;
     RestingOrder& operator=(const RestingOrder&) = delete;
 
-    bool empty() const
-    {
-        return quantity_ == 0;
-    }
+    bool empty() const { return quantity_ == 0; }
 
-    bool operator==(const RestingOrder& compOrder) const
-    {
-        return id_ == compOrder.id_;
-    }
+    bool operator==(const RestingOrder& compOrder) const { return id_ == compOrder.id_; }
 };
 
 } // namespace lob::core

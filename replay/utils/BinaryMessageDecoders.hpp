@@ -1,11 +1,10 @@
 #pragma once
 
-#include "data/DecodedMessageTypes.hpp"
-
 #include <fstream>
 
-namespace lob::replay::utils
-{
+#include "data/DecodedMessageTypes.hpp"
+
+namespace lob::replay::utils {
 
 data::SystemEventMessage decode_s_type_message(std::ifstream& file);
 data::StockDirectoryMessage decode_r_type_message(std::ifstream& file);

@@ -10,8 +10,9 @@ target_include_directories(ReplayEngine
 )
 
 target_link_libraries(ReplayEngine
-    PRIVATE
+    PUBLIC
         OrderBook
+    PRIVATE
         ReplayUtils
 )
 

@@ -2,13 +2,8 @@
 
 #include <cstdint>
 
-namespace lob
-{
+namespace lob {
 
-enum class OrderType : std::uint8_t
-{
-    MARKET,
-    LIMIT
-};
+enum class OrderType : std::uint8_t { MARKET, LIMIT };
 
 } // namespace lob

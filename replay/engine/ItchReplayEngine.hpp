@@ -1,23 +1,20 @@
 #pragma once
 
-#include "lob/OrderBook.hpp"
-#include "lob/OrderBookConfig.hpp"
-
-#include "data/CommonFieldAliases.hpp"
-#include "data/DecodedMessageTypes.hpp"
-
 #include <array>
 #include <cstddef>
 #include <optional>
 #include <ostream>
 #include <string>
 
-namespace lob::replay::engine
-{
+#include "data/CommonFieldAliases.hpp"
+#include "data/DecodedMessageTypes.hpp"
+#include "lob/OrderBook.hpp"
+#include "lob/OrderBookConfig.hpp"
 
-class ItchReplayEngine
-{
-public:
+namespace lob::replay::engine {
+
+class ItchReplayEngine {
+  public:
     ItchReplayEngine() = delete;
     explicit ItchReplayEngine(const std::string& symbol, const OrderBookConfig& obConfig);
 
@@ -33,10 +30,10 @@ public:
     void on_message(const data::OrderCancelMessage& message);
     void on_message(const data::OrderDeleteMessage& message);
     void on_message(const data::OrderReplaceMessage& message);
-    
+
     void print_summary(std::ostream& out, std::size_t depth = 5) const;
 
-private:
+  private:
     bool is_target_stock(data::StockLocate stockLocate) const;
     bool matches_symbol(const std::array<char, 8>& itchStock, const std::string& symbol);
 
@@ -52,4 +49,4 @@ private:
     OrderBook ob_;
 };
 
-} // lob::replay::engine
+} // namespace lob::replay::engine

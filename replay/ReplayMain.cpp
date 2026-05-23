@@ -1,10 +1,3 @@
-#include "lob/OrderBookConfig.hpp"
-
-#include "data/CommonFieldAliases.hpp"
-
-#include "engine/ItchParser.hpp"
-#include "engine/ItchReplayEngine.hpp"
-
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
@@ -13,8 +6,12 @@
 #include <sstream>
 #include <string>
 
-lob::replay::data::Timestamp parse_stop_time(const std::string& stopTime)
-{
+#include "data/CommonFieldAliases.hpp"
+#include "engine/ItchParser.hpp"
+#include "engine/ItchReplayEngine.hpp"
+#include "lob/OrderBookConfig.hpp"
+
+lob::replay::data::Timestamp parse_stop_time(const std::string& stopTime) {
     int hours = 0;
     int minutes = 0;
     int seconds = 0;
@@ -23,26 +20,18 @@ lob::replay::data::Timestamp parse_stop_time(const std::string& stopTime)
 
     std::istringstream input{stopTime};
 
-    if (!(input >> hours >> firstColon >> minutes >> secondColon >> seconds) ||
-        firstColon != ':' ||
-        secondColon != ':'
-       )
-    {
+    if (!(input >> hours >> firstColon >> minutes >> secondColon >> seconds) || firstColon != ':' ||
+        secondColon != ':') {
         throw std::invalid_argument{"Invalid --stop-at time. Expected HH:MM:SS."};
     }
 
     input >> std::ws;
 
-    if (!input.eof())
-    {
+    if (!input.eof()) {
         throw std::invalid_argument{"Invalid --stop-at time. Expected HH:MM:SS."};
     }
 
-    if (hours < 0 || hours > 23 ||
-        minutes < 0 || minutes > 59 ||
-        seconds < 0 || seconds > 59
-       )
-    {
+    if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59 || seconds < 0 || seconds > 59) {
         throw std::invalid_argument{"Invalid --stop-at time value."};
     }
 
@@ -56,25 +45,21 @@ lob::replay::data::Timestamp parse_stop_time(const std::string& stopTime)
     return totalSeconds * nanosecondsPerSecond;
 }
 
-int main(int argc, char** argv)
-{
-    if (argc != 6 && argc != 8)
-    {
-        std::cerr
-            << "Usage:\n"
-            << "  ItchReplay <itch_file> <symbol> <initial_pool_size> "
-            << "<min_price> <max_price> [--stop-at HH:MM:SS]\n\n"
-            << "Examples:\n"
-            << "  ItchReplay data/full/03272019.NASDAQ_ITCH50.bin "
-            << "AAPL 2000000 1 10000000\n\n"
-            << "  ItchReplay data/full/03272019.NASDAQ_ITCH50.bin "
-            << "AAPL 2000000 1 10000000 --stop-at 10:00:00\n";
+int main(int argc, char** argv) {
+    if (argc != 6 && argc != 8) {
+        std::cerr << "Usage:\n"
+                  << "  ItchReplay <itch_file> <symbol> <initial_pool_size> "
+                  << "<min_price> <max_price> [--stop-at HH:MM:SS]\n\n"
+                  << "Examples:\n"
+                  << "  ItchReplay data/full/03272019.NASDAQ_ITCH50.bin "
+                  << "AAPL 2000000 1 10000000\n\n"
+                  << "  ItchReplay data/full/03272019.NASDAQ_ITCH50.bin "
+                  << "AAPL 2000000 1 10000000 --stop-at 10:00:00\n";
 
         return EXIT_FAILURE;
     }
 
-    try
-    {
+    try {
         const std::string filePath = argv[1];
         const std::string symbol = argv[2];
 
@@ -84,12 +69,10 @@ int main(int argc, char** argv)
         std::optional<lob::replay::data::Timestamp> stopTimestamp = std::nullopt;
         std::optional<std::string> stopTimeLabel = std::nullopt;
 
-        if (argc == 8)
-        {
+        if (argc == 8) {
             const std::string option = argv[6];
 
-            if (option != "--stop-at")
-            {
+            if (option != "--stop-at") {
                 throw std::invalid_argument{"Unknown option. Expected --stop-at."};
             }
 
@@ -104,17 +87,14 @@ int main(int argc, char** argv)
 
         parser.parse(replayEngine, stopTimestamp);
 
-        if (stopTimeLabel.has_value())
-        {
+        if (stopTimeLabel.has_value()) {
             std::cout << "Replay cutoff: " << *stopTimeLabel << "\n";
         }
 
         replayEngine.print_summary(std::cout);
 
         std::cout << "Replay completed successfully.\n";
-    }
-    catch (const std::exception& ex)
-    {
+    } catch (const std::exception& ex) {
         std::cerr << "Replay failed: " << ex.what() << '\n';
         return EXIT_FAILURE;
     }

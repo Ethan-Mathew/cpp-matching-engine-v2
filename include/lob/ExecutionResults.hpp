@@ -1,14 +1,12 @@
 #pragma once
 
-#include "Aliases.hpp"
-
 #include <cstdint>
 
-namespace lob
-{
+#include "Aliases.hpp"
 
-struct ExecutionResult
-{
+namespace lob {
+
+struct ExecutionResult {
     OrderID makerOrderID_;
     Price makerPrice_;
     Quantity executedQuantity_;

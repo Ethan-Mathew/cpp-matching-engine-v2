@@ -2,13 +2,8 @@
 
 #include <cstdint>
 
-namespace lob::core
-{
+namespace lob::core {
 
-enum class RestingLifetime : std::uint8_t
-{
-    GTC,
-    DAY
-};
+enum class RestingLifetime : std::uint8_t { GTC, DAY };
 
 } // namespace lob::core

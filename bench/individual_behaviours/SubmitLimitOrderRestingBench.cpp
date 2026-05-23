@@ -1,5 +1,7 @@
 #include <benchmark/benchmark.h>
 
+#include <cstddef>
+
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/OrderBookConfig.hpp"
@@ -7,30 +9,18 @@
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
 
-#include <cstddef>
-
 using namespace lob;
 
-static void BM_SubmitRestingSameLevel(benchmark::State& state)
-{
-
+static void BM_SubmitRestingSameLevel(benchmark::State& state) {
     const std::size_t batchSize = static_cast<std::size_t>(state.range(0));
-    
-    for (auto _ : state)
-    {
+
+    for (auto _ : state) {
         state.PauseTiming();
         OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
         state.ResumeTiming();
 
-        for (std::size_t i = 0; i < batchSize; i++)
-        {
-            LimitOrderRequest limitRequest{
-                i + 1, 
-                1, 
-                1, 
-                Side::BUY, 
-                TimeInForce::GTC
-            };
+        for (std::size_t i = 0; i < batchSize; i++) {
+            LimitOrderRequest limitRequest{i + 1, 1, 1, Side::BUY, TimeInForce::GTC};
 
             benchmark::DoNotOptimize(ob.submit_limit_order(limitRequest));
         }
@@ -41,26 +31,17 @@ static void BM_SubmitRestingSameLevel(benchmark::State& state)
     state.SetItemsProcessed(state.iterations() * batchSize);
 }
 
-static void BM_SubmitRestingDiffLevels(benchmark::State& state)
-{
-
+static void BM_SubmitRestingDiffLevels(benchmark::State& state) {
     const std::size_t batchSize = static_cast<std::size_t>(state.range(0));
-    
-    for (auto _ : state)
-    {
+
+    for (auto _ : state) {
         state.PauseTiming();
         OrderBook ob{OrderBookConfig{batchSize + 1024, 1, static_cast<Price>(batchSize)}};
         state.ResumeTiming();
 
-        for (std::size_t i = 0; i < batchSize; i++)
-        {
-            LimitOrderRequest limitRequest{
-                i + 1, 
-                static_cast<Price>(i + 1), 
-                1, 
-                Side::BUY, 
-                TimeInForce::GTC
-            };
+        for (std::size_t i = 0; i < batchSize; i++) {
+            LimitOrderRequest limitRequest{i + 1, static_cast<Price>(i + 1), 1, Side::BUY,
+                                           TimeInForce::GTC};
 
             benchmark::DoNotOptimize(ob.submit_limit_order(limitRequest));
         }
@@ -72,26 +53,17 @@ static void BM_SubmitRestingDiffLevels(benchmark::State& state)
 }
 
 template <std::size_t Spread>
-static void BM_SubmitRestingDiffLevelsFixedSpread(benchmark::State& state)
-{
-
+static void BM_SubmitRestingDiffLevelsFixedSpread(benchmark::State& state) {
     const std::size_t batchSize = static_cast<std::size_t>(state.range(0));
-    
-    for (auto _ : state)
-    {
+
+    for (auto _ : state) {
         state.PauseTiming();
         OrderBook ob{OrderBookConfig{batchSize + 1024, 1, static_cast<Price>(Spread)}};
         state.ResumeTiming();
 
-        for (std::size_t i = 0; i < batchSize; i++)
-        {
-            LimitOrderRequest limitRequest{
-                i + 1, 
-                static_cast<Price>((i % Spread) + 1), 
-                1, 
-                Side::BUY, 
-                TimeInForce::GTC
-            };
+        for (std::size_t i = 0; i < batchSize; i++) {
+            LimitOrderRequest limitRequest{i + 1, static_cast<Price>((i % Spread) + 1), 1,
+                                           Side::BUY, TimeInForce::GTC};
 
             benchmark::DoNotOptimize(ob.submit_limit_order(limitRequest));
         }
