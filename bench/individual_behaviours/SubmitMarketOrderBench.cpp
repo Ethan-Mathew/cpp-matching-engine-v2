@@ -1,5 +1,7 @@
 #include <benchmark/benchmark.h>
 
+#include <cstddef>
+
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/OrderBookConfig.hpp"
@@ -7,28 +9,19 @@
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
 
-#include <cstddef>
-
 using namespace lob;
 
 // Market orders that cancel immediately against an empty opposite book
-static void BM_SubmitMarketNoFill(benchmark::State& state)
-{
+static void BM_SubmitMarketNoFill(benchmark::State& state) {
     const std::size_t batchSize = static_cast<std::size_t>(state.range(0));
 
-    for (auto _ : state)
-    {
+    for (auto _ : state) {
         state.PauseTiming();
         OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
         state.ResumeTiming();
 
-        for (std::size_t i = 0; i < batchSize; ++i)
-        {
-            MarketOrderRequest request{
-                i + 1,
-                1,
-                Side::BUY
-            };
+        for (std::size_t i = 0; i < batchSize; ++i) {
+            MarketOrderRequest request{i + 1, 1, Side::BUY};
 
             benchmark::DoNotOptimize(ob.submit_market_order(request));
         }
@@ -40,25 +33,16 @@ static void BM_SubmitMarketNoFill(benchmark::State& state)
 }
 
 // Market buy orders that each fully consume one maker at one ask level
-static void BM_SubmitMarketSameLevelFullFill(benchmark::State& state)
-{
+static void BM_SubmitMarketSameLevelFullFill(benchmark::State& state) {
     const std::size_t batchSize = static_cast<std::size_t>(state.range(0));
 
-    for (auto _ : state)
-    {
+    for (auto _ : state) {
         state.PauseTiming();
 
         OrderBook ob{OrderBookConfig{batchSize + 1024, 1, 1}};
 
-        for (std::size_t i = 1; i <= batchSize; ++i)
-        {
-            LimitOrderRequest restingAsk{
-                i,
-                1,
-                1,
-                Side::SELL,
-                TimeInForce::GTC
-            };
+        for (std::size_t i = 1; i <= batchSize; ++i) {
+            LimitOrderRequest restingAsk{i, 1, 1, Side::SELL, TimeInForce::GTC};
 
             benchmark::DoNotOptimize(ob.submit_limit_order(restingAsk));
         }
@@ -67,13 +51,8 @@ static void BM_SubmitMarketSameLevelFullFill(benchmark::State& state)
 
         const std::size_t doubleBatchSize = batchSize << 1;
 
-        for (std::size_t i = batchSize + 1; i <= doubleBatchSize; ++i)
-        {
-            MarketOrderRequest request{
-                i,
-                1,
-                Side::BUY
-            };
+        for (std::size_t i = batchSize + 1; i <= doubleBatchSize; ++i) {
+            MarketOrderRequest request{i, 1, Side::BUY};
 
             benchmark::DoNotOptimize(ob.submit_market_order(request));
         }
@@ -85,47 +64,31 @@ static void BM_SubmitMarketSameLevelFullFill(benchmark::State& state)
 }
 
 // Market buy orders that each fully sweep a fixed number of ask price levels
-template <std::size_t SweepDepth>
-static void BM_SubmitMarketSweepLevels(benchmark::State& state)
-{
+template <std::size_t SweepDepth> static void BM_SubmitMarketSweepLevels(benchmark::State& state) {
     static_assert(SweepDepth > 0);
 
     const std::size_t batchSize = static_cast<std::size_t>(state.range(0));
 
-    for (auto _ : state)
-    {
+    for (auto _ : state) {
         state.PauseTiming();
 
         const std::size_t restingOrderCount = batchSize * SweepDepth;
 
-        OrderBook ob{OrderBookConfig{
-            restingOrderCount + 1024,
-            10'000,
-            static_cast<Price>(10'000 + restingOrderCount - 1)
-        }};
+        OrderBook ob{OrderBookConfig{restingOrderCount + 1024, 10'000,
+                                     static_cast<Price>(10'000 + restingOrderCount - 1)}};
 
-        for (std::size_t i = 0; i < restingOrderCount; ++i)
-        {
-            LimitOrderRequest restingAsk{
-                i + 1,
-                static_cast<Price>(10'000 + i),
-                1,
-                Side::SELL,
-                TimeInForce::GTC
-            };
+        for (std::size_t i = 0; i < restingOrderCount; ++i) {
+            LimitOrderRequest restingAsk{i + 1, static_cast<Price>(10'000 + i), 1, Side::SELL,
+                                         TimeInForce::GTC};
 
             benchmark::DoNotOptimize(ob.submit_limit_order(restingAsk));
         }
 
         state.ResumeTiming();
 
-        for (std::size_t i = 0; i < batchSize; ++i)
-        {
-            MarketOrderRequest request{
-                restingOrderCount + i + 1,
-                static_cast<Quantity>(SweepDepth),
-                Side::BUY
-            };
+        for (std::size_t i = 0; i < batchSize; ++i) {
+            MarketOrderRequest request{restingOrderCount + i + 1, static_cast<Quantity>(SweepDepth),
+                                       Side::BUY};
 
             benchmark::DoNotOptimize(ob.submit_market_order(request));
         }

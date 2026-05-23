@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
+
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Results.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
-
-#include <cstddef>
-#include <cstdint>
 
 using namespace lob;
 
@@ -17,30 +17,18 @@ constexpr Price minPrice = 0;
 constexpr Price maxPrice = 200000;
 constexpr Price defaultPrice = 10000;
 
-class OBCancelOrderTest : public testing::Test
-{
-protected:
-    OBCancelOrderTest()
-        : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}}
-    {
-    }
+class OBCancelOrderTest : public testing::Test {
+  protected:
+    OBCancelOrderTest() : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}} {}
 
-    static LimitOrderRequest make_limit_order(OrderID id,
-                                              Price price,
-                                              Quantity qty,
-                                              Side side,
-                                              TimeInForce tif = TimeInForce::GTC)
-    {
+    static LimitOrderRequest make_limit_order(OrderID id, Price price, Quantity qty, Side side,
+                                              TimeInForce tif = TimeInForce::GTC) {
         return LimitOrderRequest{id, price, qty, side, tif};
     }
 
-    static CancelOrderRequest make_cancel(OrderID id)
-    {
-        return CancelOrderRequest{id};
-    }
+    static CancelOrderRequest make_cancel(OrderID id) { return CancelOrderRequest{id}; }
 
-    void expect_empty_book()
-    {
+    void expect_empty_book() {
         EXPECT_EQ(ob_.get_num_orders(), 0);
         EXPECT_EQ(ob_.get_num_levels_bids(), 0);
         EXPECT_EQ(ob_.get_num_levels_asks(), 0);
@@ -50,8 +38,7 @@ protected:
     OrderBook ob_;
 };
 
-TEST_F(OBCancelOrderTest, CancelMissingOrderReturnsNotFound)
-{
+TEST_F(OBCancelOrderTest, CancelMissingOrderReturnsNotFound) {
     CancelResult result = ob_.cancel_order(make_cancel(42));
 
     EXPECT_EQ(result.status_, CancelStatus::NOT_FOUND);
@@ -60,8 +47,7 @@ TEST_F(OBCancelOrderTest, CancelMissingOrderReturnsNotFound)
     expect_empty_book();
 }
 
-TEST_F(OBCancelOrderTest, CancelSingleBidOrderRemovesIt)
-{
+TEST_F(OBCancelOrderTest, CancelSingleBidOrderRemovesIt) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY));
 
     ASSERT_EQ(ob_.get_num_orders(), 1);
@@ -76,8 +62,7 @@ TEST_F(OBCancelOrderTest, CancelSingleBidOrderRemovesIt)
     expect_empty_book();
 }
 
-TEST_F(OBCancelOrderTest, CancelSingleAskOrderRemovesIt)
-{
+TEST_F(OBCancelOrderTest, CancelSingleAskOrderRemovesIt) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 7, Side::SELL));
 
     ASSERT_EQ(ob_.get_num_orders(), 1);
@@ -92,8 +77,7 @@ TEST_F(OBCancelOrderTest, CancelSingleAskOrderRemovesIt)
     expect_empty_book();
 }
 
-TEST_F(OBCancelOrderTest, CancelOneOfMultipleOrdersAtSameBidLevelKeepsLevel)
-{
+TEST_F(OBCancelOrderTest, CancelOneOfMultipleOrdersAtSameBidLevelKeepsLevel) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 2, Side::BUY));
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 3, Side::BUY));
 
@@ -116,8 +100,7 @@ TEST_F(OBCancelOrderTest, CancelOneOfMultipleOrdersAtSameBidLevelKeepsLevel)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::BUY), 3);
 }
 
-TEST_F(OBCancelOrderTest, CancelOneOfMultipleOrdersAtSameAskLevelKeepsLevel)
-{
+TEST_F(OBCancelOrderTest, CancelOneOfMultipleOrdersAtSameAskLevelKeepsLevel) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 4, Side::SELL));
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 6, Side::SELL));
 
@@ -140,8 +123,7 @@ TEST_F(OBCancelOrderTest, CancelOneOfMultipleOrdersAtSameAskLevelKeepsLevel)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 4);
 }
 
-TEST_F(OBCancelOrderTest, CancelOnlyOrderAtBidLevelErasesLevel)
-{
+TEST_F(OBCancelOrderTest, CancelOnlyOrderAtBidLevelErasesLevel) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 8, Side::BUY));
 
     ASSERT_TRUE(ob_.check_level_exists(defaultPrice, Side::BUY));
@@ -155,8 +137,7 @@ TEST_F(OBCancelOrderTest, CancelOnlyOrderAtBidLevelErasesLevel)
     expect_empty_book();
 }
 
-TEST_F(OBCancelOrderTest, CancelOnlyOrderAtAskLevelErasesLevel)
-{
+TEST_F(OBCancelOrderTest, CancelOnlyOrderAtAskLevelErasesLevel) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 9, Side::SELL));
 
     ASSERT_TRUE(ob_.check_level_exists(defaultPrice, Side::SELL));
@@ -170,8 +151,7 @@ TEST_F(OBCancelOrderTest, CancelOnlyOrderAtAskLevelErasesLevel)
     expect_empty_book();
 }
 
-TEST_F(OBCancelOrderTest, CancelOrderAtOneBidLevelLeavesOtherBidLevelsUntouched)
-{
+TEST_F(OBCancelOrderTest, CancelOrderAtOneBidLevelLeavesOtherBidLevelsUntouched) {
     ob_.submit_limit_order(make_limit_order(1, 10000, 2, Side::BUY));
     ob_.submit_limit_order(make_limit_order(2, 10001, 3, Side::BUY));
     ob_.submit_limit_order(make_limit_order(3, 10002, 4, Side::BUY));
@@ -197,8 +177,7 @@ TEST_F(OBCancelOrderTest, CancelOrderAtOneBidLevelLeavesOtherBidLevelsUntouched)
     EXPECT_EQ(ob_.get_num_shares_at_level(10002, Side::BUY), 4);
 }
 
-TEST_F(OBCancelOrderTest, CancelOrderAtOneAskLevelLeavesOtherAskLevelsUntouched)
-{
+TEST_F(OBCancelOrderTest, CancelOrderAtOneAskLevelLeavesOtherAskLevelsUntouched) {
     ob_.submit_limit_order(make_limit_order(1, 10000, 2, Side::SELL));
     ob_.submit_limit_order(make_limit_order(2, 10001, 3, Side::SELL));
     ob_.submit_limit_order(make_limit_order(3, 10002, 4, Side::SELL));
@@ -224,8 +203,7 @@ TEST_F(OBCancelOrderTest, CancelOrderAtOneAskLevelLeavesOtherAskLevelsUntouched)
     EXPECT_EQ(ob_.get_num_shares_at_level(10002, Side::SELL), 4);
 }
 
-TEST_F(OBCancelOrderTest, CancelAfterPartialExecutionCancelsRemainingOpenQuantity)
-{
+TEST_F(OBCancelOrderTest, CancelAfterPartialExecutionCancelsRemainingOpenQuantity) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 10, Side::SELL));
 
     SubmissionResult fillResult =
@@ -246,9 +224,8 @@ TEST_F(OBCancelOrderTest, CancelAfterPartialExecutionCancelsRemainingOpenQuantit
     expect_empty_book();
 }
 
-TEST_F(OBCancelOrderTest, CancelDoesNotTouchOppositeSideBook)
-{
-    ob_.submit_limit_order(make_limit_order(1,  9999, 2, Side::BUY));
+TEST_F(OBCancelOrderTest, CancelDoesNotTouchOppositeSideBook) {
+    ob_.submit_limit_order(make_limit_order(1, 9999, 2, Side::BUY));
     ob_.submit_limit_order(make_limit_order(2, 10001, 3, Side::SELL));
 
     ASSERT_EQ(ob_.get_num_orders(), 2);
@@ -269,8 +246,7 @@ TEST_F(OBCancelOrderTest, CancelDoesNotTouchOppositeSideBook)
     EXPECT_EQ(ob_.get_num_shares_at_level(10001, Side::SELL), 3);
 }
 
-TEST_F(OBCancelOrderTest, ReCancelingSameOrderReturnsNotFound)
-{
+TEST_F(OBCancelOrderTest, ReCancelingSameOrderReturnsNotFound) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY));
 
     CancelResult first = ob_.cancel_order(make_cancel(1));
@@ -285,8 +261,7 @@ TEST_F(OBCancelOrderTest, ReCancelingSameOrderReturnsNotFound)
     expect_empty_book();
 }
 
-TEST_F(OBCancelOrderTest, CancelAfterSessionEndPrunedDayOrderReturnsNotFound)
-{
+TEST_F(OBCancelOrderTest, CancelAfterSessionEndPrunedDayOrderReturnsNotFound) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::SELL, TimeInForce::DAY));
 
     DayOrderPruneResult pruneResult = ob_.on_session_end();

@@ -1,23 +1,16 @@
 #pragma once
 
-#include "lob/Aliases.hpp"
+#include <cstdint>
 
 #include "LevelPruneStats.hpp"
 #include "RestingOrder.hpp"
+#include "lob/Aliases.hpp"
 
-#include <cstdint>
+namespace lob::core {
 
-namespace lob::core
-{
-
-class PriceLevel
-{
-public:
-    enum class RemoveOrderResult : std::uint8_t
-    {
-        EMPTY,
-        NON_EMPTY
-    };
+class PriceLevel {
+  public:
+    enum class RemoveOrderResult : std::uint8_t { EMPTY, NON_EMPTY };
 
     PriceLevel() = default;
 
@@ -43,28 +36,25 @@ public:
     Volume get_total_volume() const;
     std::uint32_t get_order_count() const;
 
-private:
+  private:
     RestingOrder* head_ = nullptr;
     RestingOrder* tail_ = nullptr;
-    
+
     Price price_;
-    Volume totalVolume_  = 0;
+    Volume totalVolume_ = 0;
     std::uint32_t orderCount_ = 0;
 };
 
 template <typename OnPrunedOrder>
-LevelPruneStats PriceLevel::prune_day_orders(OnPrunedOrder&& onPrunedOrder)
-{
+LevelPruneStats PriceLevel::prune_day_orders(OnPrunedOrder&& onPrunedOrder) {
     LevelPruneStats result;
 
     RestingOrder* ptr = head_;
 
-    while (ptr)
-    {
+    while (ptr) {
         RestingOrder* next = ptr->next_;
 
-        if (ptr->lifetime_ == RestingLifetime::DAY)
-        {
+        if (ptr->lifetime_ == RestingLifetime::DAY) {
             result.quantityPruned_ += ptr->quantity_;
             result.ordersPruned_++;
 

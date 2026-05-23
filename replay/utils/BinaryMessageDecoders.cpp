@@ -1,7 +1,3 @@
-#include "data/CommonFieldAliases.hpp"
-#include "data/DecodedMessageTypes.hpp"
-
-#include "BinaryDecodeHelpers.hpp"
 #include "BinaryMessageDecoders.hpp"
 
 #include <algorithm>
@@ -11,26 +7,22 @@
 #include <fstream>
 #include <iostream>
 
-namespace lob::replay::utils
-{
+#include "BinaryDecodeHelpers.hpp"
+#include "data/CommonFieldAliases.hpp"
+#include "data/DecodedMessageTypes.hpp"
 
-data::SystemEventMessage decode_s_type_message(std::ifstream& file)
-{
+namespace lob::replay::utils {
+
+data::SystemEventMessage decode_s_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
     const char eventCode = read_char(file);
 
-    return data::SystemEventMessage{
-        stockLocate, 
-        trackingNumber, 
-        timestamp, 
-        eventCode
-    };
+    return data::SystemEventMessage{stockLocate, trackingNumber, timestamp, eventCode};
 }
 
-data::StockDirectoryMessage decode_r_type_message(std::ifstream& file)
-{
+data::StockDirectoryMessage decode_r_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
@@ -49,29 +41,26 @@ data::StockDirectoryMessage decode_r_type_message(std::ifstream& file)
     const std::uint32_t etpLeverageFactor = read_u32_be(file);
     const char inverseIndicator = read_char(file);
 
-    return data::StockDirectoryMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        stock,
-        marketCategory,
-        financialStatusIndicator,
-        roundLotSize,
-        roundLotsOnly,
-        issueClassification,
-        issueSubType,
-        authenticity,
-        shortSaleThresholdIndicator,
-        ipoFlag,
-        luldReferencePriceTier,
-        etpFlag,
-        etpLeverageFactor,
-        inverseIndicator
-    };
+    return data::StockDirectoryMessage{stockLocate,
+                                       trackingNumber,
+                                       timestamp,
+                                       stock,
+                                       marketCategory,
+                                       financialStatusIndicator,
+                                       roundLotSize,
+                                       roundLotsOnly,
+                                       issueClassification,
+                                       issueSubType,
+                                       authenticity,
+                                       shortSaleThresholdIndicator,
+                                       ipoFlag,
+                                       luldReferencePriceTier,
+                                       etpFlag,
+                                       etpLeverageFactor,
+                                       inverseIndicator};
 }
 
-data::AddOrderMessage decode_a_type_message(std::ifstream& file)
-{
+data::AddOrderMessage decode_a_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
@@ -81,20 +70,11 @@ data::AddOrderMessage decode_a_type_message(std::ifstream& file)
     const std::array<char, 8> stock = read_alpha_array<8>(file);
     const data::Price price = read_u32_be(file);
 
-    return data::AddOrderMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        orderReferenceNumber,
-        buySellIndicator,
-        shares,
-        stock,
-        price
-    };
+    return data::AddOrderMessage{stockLocate,      trackingNumber, timestamp, orderReferenceNumber,
+                                 buySellIndicator, shares,         stock,     price};
 }
 
-data::AddOrderWithMPIDMessage decode_f_type_message(std::ifstream& file)
-{
+data::AddOrderWithMPIDMessage decode_f_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
@@ -106,20 +86,11 @@ data::AddOrderWithMPIDMessage decode_f_type_message(std::ifstream& file)
     const std::array<char, 4> attribution = read_alpha_array<4>(file);
 
     return data::AddOrderWithMPIDMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        orderReferenceNumber,
-        buySellIndicator,
-        shares,
-        stock,
-        price,
-        attribution
-    };
+        stockLocate, trackingNumber, timestamp, orderReferenceNumber, buySellIndicator,
+        shares,      stock,          price,     attribution};
 }
 
-data::OrderExecutedMessage decode_e_type_message(std::ifstream& file)
-{
+data::OrderExecutedMessage decode_e_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
@@ -127,18 +98,11 @@ data::OrderExecutedMessage decode_e_type_message(std::ifstream& file)
     const data::Shares executedShares = read_u32_be(file);
     const data::MatchNumber matchNumber = read_u64_be(file);
 
-    return data::OrderExecutedMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        orderReferenceNumber,
-        executedShares,
-        matchNumber
-    };
+    return data::OrderExecutedMessage{stockLocate,          trackingNumber, timestamp,
+                                      orderReferenceNumber, executedShares, matchNumber};
 }
 
-data::OrderExecutedWithPriceMessage decode_c_type_message(std::ifstream& file)
-{
+data::OrderExecutedWithPriceMessage decode_c_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
@@ -149,51 +113,31 @@ data::OrderExecutedWithPriceMessage decode_c_type_message(std::ifstream& file)
     const data::Price executionPrice = read_u32_be(file);
 
     return data::OrderExecutedWithPriceMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        orderReferenceNumber,
-        executedShares,
-        matchNumber,
-        printable,
-        executionPrice
-    };
+        stockLocate,    trackingNumber, timestamp, orderReferenceNumber,
+        executedShares, matchNumber,    printable, executionPrice};
 }
 
-data::OrderCancelMessage decode_x_type_message(std::ifstream& file)
-{
+data::OrderCancelMessage decode_x_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
     const data::OrderReferenceNumber orderReferenceNumber = read_u64_be(file);
     const data::Shares cancelledShares = read_u32_be(file);
 
-    return data::OrderCancelMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        orderReferenceNumber,
-        cancelledShares
-    };
+    return data::OrderCancelMessage{stockLocate, trackingNumber, timestamp, orderReferenceNumber,
+                                    cancelledShares};
 }
 
-data::OrderDeleteMessage decode_d_type_message(std::ifstream& file)
-{
+data::OrderDeleteMessage decode_d_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
     const data::OrderReferenceNumber orderReferenceNumber = read_u64_be(file);
 
-    return data::OrderDeleteMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        orderReferenceNumber
-    };
+    return data::OrderDeleteMessage{stockLocate, trackingNumber, timestamp, orderReferenceNumber};
 }
 
-data::OrderReplaceMessage decode_u_type_message(std::ifstream& file)
-{
+data::OrderReplaceMessage decode_u_type_message(std::ifstream& file) {
     const data::StockLocate stockLocate = read_u16_be(file);
     const data::TrackingNumber trackingNumber = read_u16_be(file);
     const data::Timestamp timestamp = read_u48_be(file);
@@ -202,15 +146,13 @@ data::OrderReplaceMessage decode_u_type_message(std::ifstream& file)
     const data::Shares shares = read_u32_be(file);
     const data::Price price = read_u32_be(file);
 
-    return data::OrderReplaceMessage{
-        stockLocate,
-        trackingNumber,
-        timestamp,
-        originalOrderReferenceNumber,
-        newOrderReferenceNumber,
-        shares,
-        price
-    };
+    return data::OrderReplaceMessage{stockLocate,
+                                     trackingNumber,
+                                     timestamp,
+                                     originalOrderReferenceNumber,
+                                     newOrderReferenceNumber,
+                                     shares,
+                                     price};
 }
 
 } // namespace lob::replay::utils

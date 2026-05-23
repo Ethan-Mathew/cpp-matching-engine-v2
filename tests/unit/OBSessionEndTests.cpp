@@ -1,14 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
+
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Results.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
-
-#include <cstddef>
-#include <cstdint>
 
 using namespace lob;
 
@@ -17,25 +17,16 @@ constexpr Price minPrice = 0;
 constexpr Price maxPrice = 200000;
 constexpr Price defaultPrice = 10000;
 
-class OBSessionEndTest : public testing::Test
-{
-protected:
-    OBSessionEndTest()
-        : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}}
-    {
-    }
+class OBSessionEndTest : public testing::Test {
+  protected:
+    OBSessionEndTest() : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}} {}
 
-    static LimitOrderRequest make_order(OrderID id,
-                                        Price price,
-                                        Quantity qty,
-                                        Side side,
-                                        TimeInForce tif)
-    {
+    static LimitOrderRequest make_order(OrderID id, Price price, Quantity qty, Side side,
+                                        TimeInForce tif) {
         return LimitOrderRequest{id, price, qty, side, tif};
     }
 
-    void expect_empty_book()
-    {
+    void expect_empty_book() {
         EXPECT_EQ(ob_.get_num_orders(), 0);
         EXPECT_EQ(ob_.get_num_levels_bids(), 0);
         EXPECT_EQ(ob_.get_num_levels_asks(), 0);
@@ -45,8 +36,7 @@ protected:
     OrderBook ob_;
 };
 
-TEST_F(OBSessionEndTest, SessionEndOnEmptyBookDoesNothing)
-{
+TEST_F(OBSessionEndTest, SessionEndOnEmptyBookDoesNothing) {
     DayOrderPruneResult result = ob_.on_session_end();
 
     EXPECT_EQ(result.ordersPruned, 0);
@@ -56,8 +46,7 @@ TEST_F(OBSessionEndTest, SessionEndOnEmptyBookDoesNothing)
     expect_empty_book();
 }
 
-TEST_F(OBSessionEndTest, SessionEndPrunesSingleDayBid)
-{
+TEST_F(OBSessionEndTest, SessionEndPrunesSingleDayBid) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 5, Side::BUY, TimeInForce::DAY));
 
     ASSERT_EQ(ob_.get_num_orders(), 1);
@@ -73,8 +62,7 @@ TEST_F(OBSessionEndTest, SessionEndPrunesSingleDayBid)
     expect_empty_book();
 }
 
-TEST_F(OBSessionEndTest, SessionEndPrunesSingleDayAsk)
-{
+TEST_F(OBSessionEndTest, SessionEndPrunesSingleDayAsk) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 7, Side::SELL, TimeInForce::DAY));
 
     ASSERT_EQ(ob_.get_num_orders(), 1);
@@ -90,8 +78,7 @@ TEST_F(OBSessionEndTest, SessionEndPrunesSingleDayAsk)
     expect_empty_book();
 }
 
-TEST_F(OBSessionEndTest, SessionEndLeavesSingleGtcBidUntouched)
-{
+TEST_F(OBSessionEndTest, SessionEndLeavesSingleGtcBidUntouched) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 5, Side::BUY, TimeInForce::GTC));
 
     DayOrderPruneResult result = ob_.on_session_end();
@@ -109,8 +96,7 @@ TEST_F(OBSessionEndTest, SessionEndLeavesSingleGtcBidUntouched)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::BUY), 5);
 }
 
-TEST_F(OBSessionEndTest, SessionEndLeavesSingleGtcAskUntouched)
-{
+TEST_F(OBSessionEndTest, SessionEndLeavesSingleGtcAskUntouched) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 6, Side::SELL, TimeInForce::GTC));
 
     DayOrderPruneResult result = ob_.on_session_end();
@@ -128,8 +114,7 @@ TEST_F(OBSessionEndTest, SessionEndLeavesSingleGtcAskUntouched)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 6);
 }
 
-TEST_F(OBSessionEndTest, SessionEndPrunesOnlyDayOrdersAtSameBidLevel)
-{
+TEST_F(OBSessionEndTest, SessionEndPrunesOnlyDayOrdersAtSameBidLevel) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 2, Side::BUY, TimeInForce::DAY));
     ob_.submit_limit_order(make_order(2, defaultPrice, 3, Side::BUY, TimeInForce::GTC));
     ob_.submit_limit_order(make_order(3, defaultPrice, 4, Side::BUY, TimeInForce::DAY));
@@ -154,8 +139,7 @@ TEST_F(OBSessionEndTest, SessionEndPrunesOnlyDayOrdersAtSameBidLevel)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::BUY), 3);
 }
 
-TEST_F(OBSessionEndTest, SessionEndPrunesOnlyDayOrdersAtSameAskLevel)
-{
+TEST_F(OBSessionEndTest, SessionEndPrunesOnlyDayOrdersAtSameAskLevel) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 2, Side::SELL, TimeInForce::DAY));
     ob_.submit_limit_order(make_order(2, defaultPrice, 3, Side::SELL, TimeInForce::GTC));
     ob_.submit_limit_order(make_order(3, defaultPrice, 4, Side::SELL, TimeInForce::DAY));
@@ -180,8 +164,7 @@ TEST_F(OBSessionEndTest, SessionEndPrunesOnlyDayOrdersAtSameAskLevel)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 3);
 }
 
-TEST_F(OBSessionEndTest, SessionEndErasesLevelWhenAllOrdersAtBidLevelAreDay)
-{
+TEST_F(OBSessionEndTest, SessionEndErasesLevelWhenAllOrdersAtBidLevelAreDay) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 2, Side::BUY, TimeInForce::DAY));
     ob_.submit_limit_order(make_order(2, defaultPrice, 3, Side::BUY, TimeInForce::DAY));
 
@@ -197,8 +180,7 @@ TEST_F(OBSessionEndTest, SessionEndErasesLevelWhenAllOrdersAtBidLevelAreDay)
     expect_empty_book();
 }
 
-TEST_F(OBSessionEndTest, SessionEndErasesLevelWhenAllOrdersAtAskLevelAreDay)
-{
+TEST_F(OBSessionEndTest, SessionEndErasesLevelWhenAllOrdersAtAskLevelAreDay) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 2, Side::SELL, TimeInForce::DAY));
     ob_.submit_limit_order(make_order(2, defaultPrice, 3, Side::SELL, TimeInForce::DAY));
 
@@ -214,10 +196,9 @@ TEST_F(OBSessionEndTest, SessionEndErasesLevelWhenAllOrdersAtAskLevelAreDay)
     expect_empty_book();
 }
 
-TEST_F(OBSessionEndTest, SessionEndPrunesBothSidesAndReportsTotals)
-{
-    ob_.submit_limit_order(make_order(1,  9999, 2, Side::BUY,  TimeInForce::DAY));
-    ob_.submit_limit_order(make_order(2, 10000, 3, Side::BUY,  TimeInForce::GTC));
+TEST_F(OBSessionEndTest, SessionEndPrunesBothSidesAndReportsTotals) {
+    ob_.submit_limit_order(make_order(1, 9999, 2, Side::BUY, TimeInForce::DAY));
+    ob_.submit_limit_order(make_order(2, 10000, 3, Side::BUY, TimeInForce::GTC));
     ob_.submit_limit_order(make_order(3, 10001, 4, Side::SELL, TimeInForce::DAY));
     ob_.submit_limit_order(make_order(4, 10002, 5, Side::SELL, TimeInForce::GTC));
     ob_.submit_limit_order(make_order(5, 10003, 6, Side::SELL, TimeInForce::DAY));
@@ -247,9 +228,8 @@ TEST_F(OBSessionEndTest, SessionEndPrunesBothSidesAndReportsTotals)
     EXPECT_EQ(ob_.get_num_shares_at_level(10002, Side::SELL), 5);
 }
 
-TEST_F(OBSessionEndTest, SessionEndDoesNotRemoveAnythingWhenOnlyGtcOrdersExist)
-{
-    ob_.submit_limit_order(make_order(1,  9999, 2, Side::BUY,  TimeInForce::GTC));
+TEST_F(OBSessionEndTest, SessionEndDoesNotRemoveAnythingWhenOnlyGtcOrdersExist) {
+    ob_.submit_limit_order(make_order(1, 9999, 2, Side::BUY, TimeInForce::GTC));
     ob_.submit_limit_order(make_order(2, 10001, 4, Side::SELL, TimeInForce::GTC));
 
     DayOrderPruneResult result = ob_.on_session_end();

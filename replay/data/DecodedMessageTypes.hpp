@@ -1,16 +1,14 @@
 #pragma once
 
-#include "CommonFieldAliases.hpp"
-
 #include <array>
 #include <cstdint>
 
-namespace lob::replay::data
-{
+#include "CommonFieldAliases.hpp"
+
+namespace lob::replay::data {
 
 // S - System Event Message
-struct SystemEventMessage
-{
+struct SystemEventMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -18,8 +16,7 @@ struct SystemEventMessage
 };
 
 // R - Stock Directory Message
-struct StockDirectoryMessage
-{
+struct StockDirectoryMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -40,8 +37,7 @@ struct StockDirectoryMessage
 };
 
 // A - Add Order, no MPID Attribution
-struct AddOrderMessage
-{
+struct AddOrderMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -53,8 +49,7 @@ struct AddOrderMessage
 };
 
 // F - Add Order with MPID Attribution
-struct AddOrderWithMPIDMessage
-{
+struct AddOrderWithMPIDMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -67,8 +62,7 @@ struct AddOrderWithMPIDMessage
 };
 
 // E - Order Executed Message
-struct OrderExecutedMessage
-{
+struct OrderExecutedMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -78,8 +72,7 @@ struct OrderExecutedMessage
 };
 
 // C - Order Executed With Price Message
-struct OrderExecutedWithPriceMessage
-{
+struct OrderExecutedWithPriceMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -91,8 +84,7 @@ struct OrderExecutedWithPriceMessage
 };
 
 // X - Order Cancel Message
-struct OrderCancelMessage
-{
+struct OrderCancelMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -101,8 +93,7 @@ struct OrderCancelMessage
 };
 
 // D - Order Delete Message
-struct OrderDeleteMessage
-{
+struct OrderDeleteMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;
@@ -110,8 +101,7 @@ struct OrderDeleteMessage
 };
 
 // U - Order Replace Message
-struct OrderReplaceMessage
-{
+struct OrderReplaceMessage {
     StockLocate stockLocate_;
     TrackingNumber trackingNumber_;
     Timestamp timestamp_;

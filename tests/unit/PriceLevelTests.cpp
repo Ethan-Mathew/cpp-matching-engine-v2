@@ -1,11 +1,10 @@
 #include <gtest/gtest.h>
 
-#include "lob/Aliases.hpp"
-#include "lob/Side.hpp"
-
 #include "PriceLevel.hpp"
 #include "RestingLifetime.hpp"
 #include "RestingOrder.hpp"
+#include "lob/Aliases.hpp"
+#include "lob/Side.hpp"
 
 using namespace lob::core;
 
@@ -17,27 +16,20 @@ using lob::Volume;
 
 constexpr lob::Price defaultPrice = 100;
 
-class PriceLevelTest : public testing::Test
-{
-protected:
-    PriceLevelTest()
-        : pl_{defaultPrice}
-    {
-    }
+class PriceLevelTest : public testing::Test {
+  protected:
+    PriceLevelTest() : pl_{defaultPrice} {}
 
-    static RestingOrder make_order(OrderID id,
-                                   Quantity qty,
+    static RestingOrder make_order(OrderID id, Quantity qty,
                                    RestingLifetime lifetime = RestingLifetime::GTC,
-                                   Side side = Side::BUY)
-    {
+                                   Side side = Side::BUY) {
         return RestingOrder{id, qty, lifetime, side};
     }
 
     PriceLevel pl_;
 };
 
-TEST_F(PriceLevelTest, PriceLevelConstructsEmpty)
-{
+TEST_F(PriceLevelTest, PriceLevelConstructsEmpty) {
     EXPECT_TRUE(pl_.empty());
     EXPECT_EQ(pl_.front(), nullptr);
     EXPECT_EQ(pl_.pop_front(), nullptr);
@@ -45,8 +37,7 @@ TEST_F(PriceLevelTest, PriceLevelConstructsEmpty)
     EXPECT_EQ(pl_.get_order_count(), 0);
 }
 
-TEST_F(PriceLevelTest, SinglePushBackWorks)
-{
+TEST_F(PriceLevelTest, SinglePushBackWorks) {
     RestingOrder order1 = make_order(1, 1);
 
     pl_.push_back(&order1);
@@ -56,8 +47,7 @@ TEST_F(PriceLevelTest, SinglePushBackWorks)
     EXPECT_EQ(pl_.front(), &order1);
 }
 
-TEST_F(PriceLevelTest, MultiPushBackWorks)
-{
+TEST_F(PriceLevelTest, MultiPushBackWorks) {
     RestingOrder order1 = make_order(1, 1);
     RestingOrder order2 = make_order(2, 2);
     RestingOrder order3 = make_order(3, 3);
@@ -71,8 +61,7 @@ TEST_F(PriceLevelTest, MultiPushBackWorks)
     EXPECT_EQ(pl_.get_total_volume(), order1.quantity_ + order2.quantity_ + order3.quantity_);
 }
 
-TEST_F(PriceLevelTest, SinglePopFrontWorks)
-{
+TEST_F(PriceLevelTest, SinglePopFrontWorks) {
     RestingOrder order1 = make_order(1, 1);
 
     pl_.push_back(&order1);
@@ -93,8 +82,7 @@ TEST_F(PriceLevelTest, SinglePopFrontWorks)
     EXPECT_EQ(pl_.get_total_volume(), 0);
 }
 
-TEST_F(PriceLevelTest, MultiPopFrontWorks)
-{
+TEST_F(PriceLevelTest, MultiPopFrontWorks) {
     RestingOrder order1 = make_order(1, 1);
     RestingOrder order2 = make_order(2, 2);
     RestingOrder order3 = make_order(3, 3);
@@ -137,8 +125,7 @@ TEST_F(PriceLevelTest, MultiPopFrontWorks)
     EXPECT_EQ(pl_.get_total_volume(), 0);
 }
 
-TEST_F(PriceLevelTest, RemoveOnlyOrder)
-{
+TEST_F(PriceLevelTest, RemoveOnlyOrder) {
     RestingOrder order1 = make_order(1, 1);
 
     pl_.push_back(&order1);
@@ -156,8 +143,7 @@ TEST_F(PriceLevelTest, RemoveOnlyOrder)
     EXPECT_EQ(pl_.get_total_volume(), 0);
 }
 
-TEST_F(PriceLevelTest, RemoveHeadOrder)
-{
+TEST_F(PriceLevelTest, RemoveHeadOrder) {
     RestingOrder order1 = make_order(1, 1);
     RestingOrder order2 = make_order(2, 2);
     RestingOrder order3 = make_order(3, 3);
@@ -179,8 +165,7 @@ TEST_F(PriceLevelTest, RemoveHeadOrder)
     EXPECT_EQ(pl_.get_total_volume(), order2.quantity_ + order3.quantity_);
 }
 
-TEST_F(PriceLevelTest, RemoveTailOrder)
-{
+TEST_F(PriceLevelTest, RemoveTailOrder) {
     RestingOrder order1 = make_order(1, 1);
     RestingOrder order2 = make_order(2, 2);
     RestingOrder order3 = make_order(3, 3);
@@ -202,8 +187,7 @@ TEST_F(PriceLevelTest, RemoveTailOrder)
     EXPECT_EQ(pl_.get_total_volume(), order1.quantity_ + order2.quantity_);
 }
 
-TEST_F(PriceLevelTest, RemoveMiddleOrder)
-{
+TEST_F(PriceLevelTest, RemoveMiddleOrder) {
     RestingOrder order1 = make_order(1, 1);
     RestingOrder order2 = make_order(2, 2);
     RestingOrder order3 = make_order(3, 3);
@@ -225,8 +209,7 @@ TEST_F(PriceLevelTest, RemoveMiddleOrder)
     EXPECT_EQ(pl_.get_total_volume(), order1.quantity_ + order3.quantity_);
 }
 
-TEST_F(PriceLevelTest, MixedOrderRemovals)
-{
+TEST_F(PriceLevelTest, MixedOrderRemovals) {
     RestingOrder order1 = make_order(1, 1);
     RestingOrder order2 = make_order(2, 2);
     RestingOrder order3 = make_order(3, 3);

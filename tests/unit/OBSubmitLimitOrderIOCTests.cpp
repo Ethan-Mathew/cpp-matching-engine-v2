@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
+
 #include "lob/Aliases.hpp"
 #include "lob/ExecutionResults.hpp"
 #include "lob/OrderBook.hpp"
@@ -8,9 +11,6 @@
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
 
-#include <cstddef>
-#include <cstdint>
-
 using namespace lob;
 
 constexpr std::size_t initialSlabSize = 10;
@@ -18,25 +18,16 @@ constexpr Price minPrice = 0;
 constexpr Price maxPrice = 200000;
 constexpr Price defaultPrice = 10000;
 
-class OBSubmitLimitOrderIOCTest : public testing::Test
-{
-protected:
-    OBSubmitLimitOrderIOCTest()
-        : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}}
-    {
-    }
+class OBSubmitLimitOrderIOCTest : public testing::Test {
+  protected:
+    OBSubmitLimitOrderIOCTest() : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}} {}
 
-    static LimitOrderRequest make_order(OrderID id,
-                                        Price price,
-                                        Quantity qty,
-                                        Side side,
-                                        TimeInForce tif = TimeInForce::IOC)
-    {
+    static LimitOrderRequest make_order(OrderID id, Price price, Quantity qty, Side side,
+                                        TimeInForce tif = TimeInForce::IOC) {
         return LimitOrderRequest{id, price, qty, side, tif};
     }
 
-    void expect_empty_book()
-    {
+    void expect_empty_book() {
         EXPECT_EQ(ob_.get_num_orders(), 0);
         EXPECT_EQ(ob_.get_num_levels_bids(), 0);
         EXPECT_EQ(ob_.get_num_levels_asks(), 0);
@@ -46,10 +37,8 @@ protected:
     OrderBook ob_;
 };
 
-TEST_F(OBSubmitLimitOrderIOCTest, OnEmptyBookCancels)
-{
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(1, defaultPrice, 5, Side::BUY));
+TEST_F(OBSubmitLimitOrderIOCTest, OnEmptyBookCancels) {
+    SubmissionResult result = ob_.submit_limit_order(make_order(1, defaultPrice, 5, Side::BUY));
 
     EXPECT_EQ(result.status_, SubmitStatus::CANCELED);
     EXPECT_EQ(result.quantityRequested_, 5);
@@ -60,12 +49,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, OnEmptyBookCancels)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, NonCrossingBuyCancelsWithoutResting)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, NonCrossingBuyCancelsWithoutResting) {
     ob_.submit_limit_order(make_order(1, defaultPrice + 10, 3, Side::SELL, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 3, Side::BUY));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 3, Side::BUY));
 
     EXPECT_EQ(result.status_, SubmitStatus::CANCELED);
     EXPECT_EQ(result.quantityRequested_, 3);
@@ -82,12 +69,11 @@ TEST_F(OBSubmitLimitOrderIOCTest, NonCrossingBuyCancelsWithoutResting)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice + 10, Side::SELL), 3);
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, NonCrossingSellCancelsWithoutResting)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, NonCrossingSellCancelsWithoutResting) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 4, Side::BUY, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice + 10, 4, Side::SELL));
+    SubmissionResult result =
+        ob_.submit_limit_order(make_order(2, defaultPrice + 10, 4, Side::SELL));
 
     EXPECT_EQ(result.status_, SubmitStatus::CANCELED);
     EXPECT_EQ(result.quantityRequested_, 4);
@@ -104,12 +90,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, NonCrossingSellCancelsWithoutResting)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::BUY), 4);
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, BuyFullyFillsSingleAsk)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, BuyFullyFillsSingleAsk) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 5, Side::SELL, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 5, Side::BUY));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 5, Side::BUY));
 
     EXPECT_EQ(result.status_, SubmitStatus::FILLED);
     EXPECT_EQ(result.quantityRequested_, 5);
@@ -123,12 +107,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, BuyFullyFillsSingleAsk)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, SellFullyFillsSingleBid)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, SellFullyFillsSingleBid) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 6, Side::BUY, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 6, Side::SELL));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 6, Side::SELL));
 
     EXPECT_EQ(result.status_, SubmitStatus::FILLED);
     EXPECT_EQ(result.quantityRequested_, 6);
@@ -142,12 +124,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, SellFullyFillsSingleBid)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, BuyPartiallyFillsAndCancelsRemainder)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, BuyPartiallyFillsAndCancelsRemainder) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 3, Side::SELL, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 5, Side::BUY));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 5, Side::BUY));
 
     EXPECT_EQ(result.status_, SubmitStatus::PARTIALLY_FILLED_CANCELED);
     EXPECT_EQ(result.quantityRequested_, 5);
@@ -161,12 +141,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, BuyPartiallyFillsAndCancelsRemainder)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, SellPartiallyFillsAndCancelsRemainder)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, SellPartiallyFillsAndCancelsRemainder) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 4, Side::BUY, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 7, Side::SELL));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 7, Side::SELL));
 
     EXPECT_EQ(result.status_, SubmitStatus::PARTIALLY_FILLED_CANCELED);
     EXPECT_EQ(result.quantityRequested_, 7);
@@ -180,13 +158,11 @@ TEST_F(OBSubmitLimitOrderIOCTest, SellPartiallyFillsAndCancelsRemainder)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, BuySweepsMultipleLevelsAndCancelsRemainder)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, BuySweepsMultipleLevelsAndCancelsRemainder) {
     ob_.submit_limit_order(make_order(1, 10000, 2, Side::SELL, TimeInForce::GTC));
     ob_.submit_limit_order(make_order(2, 10001, 3, Side::SELL, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(3, 10001, 7, Side::BUY));
+    SubmissionResult result = ob_.submit_limit_order(make_order(3, 10001, 7, Side::BUY));
 
     EXPECT_EQ(result.status_, SubmitStatus::PARTIALLY_FILLED_CANCELED);
     EXPECT_EQ(result.quantityRequested_, 7);
@@ -205,13 +181,11 @@ TEST_F(OBSubmitLimitOrderIOCTest, BuySweepsMultipleLevelsAndCancelsRemainder)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, SellSweepsMultipleLevelsAndCancelsRemainder)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, SellSweepsMultipleLevelsAndCancelsRemainder) {
     ob_.submit_limit_order(make_order(1, 10001, 2, Side::BUY, TimeInForce::GTC));
     ob_.submit_limit_order(make_order(2, 10000, 3, Side::BUY, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(3, 10000, 8, Side::SELL));
+    SubmissionResult result = ob_.submit_limit_order(make_order(3, 10000, 8, Side::SELL));
 
     EXPECT_EQ(result.status_, SubmitStatus::PARTIALLY_FILLED_CANCELED);
     EXPECT_EQ(result.quantityRequested_, 8);
@@ -230,12 +204,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, SellSweepsMultipleLevelsAndCancelsRemainder)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, NeverRestsResidualOnBuySide)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, NeverRestsResidualOnBuySide) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 2, Side::SELL, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 5, Side::BUY));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 5, Side::BUY));
 
     EXPECT_EQ(result.status_, SubmitStatus::PARTIALLY_FILLED_CANCELED);
     EXPECT_EQ(result.quantityFilled_, 2);
@@ -247,12 +219,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, NeverRestsResidualOnBuySide)
     EXPECT_EQ(ob_.get_memory_pool_curr_alloc(), 0);
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, NeverRestsResidualOnSellSide)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, NeverRestsResidualOnSellSide) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 2, Side::BUY, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 6, Side::SELL));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 6, Side::SELL));
 
     EXPECT_EQ(result.status_, SubmitStatus::PARTIALLY_FILLED_CANCELED);
     EXPECT_EQ(result.quantityFilled_, 2);
@@ -264,12 +234,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, NeverRestsResidualOnSellSide)
     EXPECT_EQ(ob_.get_memory_pool_curr_alloc(), 0);
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, DuplicateOrderIdIsRejected)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, DuplicateOrderIdIsRejected) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 5, Side::BUY, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(1, defaultPrice, 5, Side::SELL));
+    SubmissionResult result = ob_.submit_limit_order(make_order(1, defaultPrice, 5, Side::SELL));
 
     EXPECT_EQ(result.status_, SubmitStatus::REJECTED);
     EXPECT_EQ(result.quantityRequested_, 5);
@@ -283,12 +251,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, DuplicateOrderIdIsRejected)
     EXPECT_EQ(ob_.get_memory_pool_curr_alloc(), 1);
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, BuyExactTouchCrossesAndFills)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, BuyExactTouchCrossesAndFills) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 4, Side::SELL, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 4, Side::BUY));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 4, Side::BUY));
 
     EXPECT_EQ(result.status_, SubmitStatus::FILLED);
     EXPECT_EQ(result.quantityRequested_, 4);
@@ -302,12 +268,10 @@ TEST_F(OBSubmitLimitOrderIOCTest, BuyExactTouchCrossesAndFills)
     expect_empty_book();
 }
 
-TEST_F(OBSubmitLimitOrderIOCTest, SellExactTouchCrossesAndFills)
-{
+TEST_F(OBSubmitLimitOrderIOCTest, SellExactTouchCrossesAndFills) {
     ob_.submit_limit_order(make_order(1, defaultPrice, 6, Side::BUY, TimeInForce::GTC));
 
-    SubmissionResult result = ob_.submit_limit_order(
-        make_order(2, defaultPrice, 6, Side::SELL));
+    SubmissionResult result = ob_.submit_limit_order(make_order(2, defaultPrice, 6, Side::SELL));
 
     EXPECT_EQ(result.status_, SubmitStatus::FILLED);
     EXPECT_EQ(result.quantityRequested_, 6);

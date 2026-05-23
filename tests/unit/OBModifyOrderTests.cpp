@@ -1,15 +1,15 @@
 #include <gtest/gtest.h>
 
+#include <cstddef>
+#include <cstdint>
+#include <optional>
+
 #include "lob/Aliases.hpp"
 #include "lob/OrderBook.hpp"
 #include "lob/Requests.hpp"
 #include "lob/Results.hpp"
 #include "lob/Side.hpp"
 #include "lob/TimeInForce.hpp"
-
-#include <cstddef>
-#include <cstdint>
-#include <optional>
 
 using namespace lob;
 
@@ -18,32 +18,20 @@ constexpr Price minPrice = 0;
 constexpr Price maxPrice = 200000;
 constexpr Price defaultPrice = 10000;
 
-class OBModifyOrderTest : public testing::Test
-{
-protected:
-    OBModifyOrderTest()
-        : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}}
-    {
-    }
+class OBModifyOrderTest : public testing::Test {
+  protected:
+    OBModifyOrderTest() : ob_{OrderBookConfig{initialSlabSize, minPrice, maxPrice}} {}
 
-    static LimitOrderRequest make_limit_order(OrderID id,
-                                              Price price,
-                                              Quantity qty,
-                                              Side side,
-                                              TimeInForce tif = TimeInForce::GTC)
-    {
+    static LimitOrderRequest make_limit_order(OrderID id, Price price, Quantity qty, Side side,
+                                              TimeInForce tif = TimeInForce::GTC) {
         return LimitOrderRequest{id, price, qty, side, tif};
     }
 
-    static ModifyOrderRequest make_modify(OrderID id,
-                                          Quantity newQty,
-                                          Price newPrice)
-    {
+    static ModifyOrderRequest make_modify(OrderID id, Quantity newQty, Price newPrice) {
         return ModifyOrderRequest{id, newQty, newPrice};
     }
 
-    void expect_empty_book()
-    {
+    void expect_empty_book() {
         EXPECT_EQ(ob_.get_num_orders(), 0);
         EXPECT_EQ(ob_.get_num_levels_bids(), 0);
         EXPECT_EQ(ob_.get_num_levels_asks(), 0);
@@ -53,8 +41,7 @@ protected:
     OrderBook ob_;
 };
 
-TEST_F(OBModifyOrderTest, ModifyMissingOrderReturnsNotFound)
-{
+TEST_F(OBModifyOrderTest, ModifyMissingOrderReturnsNotFound) {
     ModificationResult result = ob_.modify_order(make_modify(42, 5, defaultPrice));
 
     EXPECT_EQ(result.status_, ModificationStatus::NOT_FOUND);
@@ -64,8 +51,7 @@ TEST_F(OBModifyOrderTest, ModifyMissingOrderReturnsNotFound)
     expect_empty_book();
 }
 
-TEST_F(OBModifyOrderTest, ModifyToZeroQuantityBecomesCancel)
-{
+TEST_F(OBModifyOrderTest, ModifyToZeroQuantityBecomesCancel) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY));
 
     ASSERT_EQ(ob_.get_num_orders(), 1);
@@ -81,8 +67,7 @@ TEST_F(OBModifyOrderTest, ModifyToZeroQuantityBecomesCancel)
     expect_empty_book();
 }
 
-TEST_F(OBModifyOrderTest, ModifyBuyOrderToNewNonCrossingPriceResubmitsAndRests)
-{
+TEST_F(OBModifyOrderTest, ModifyBuyOrderToNewNonCrossingPriceResubmitsAndRests) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY));
 
     ModificationResult result = ob_.modify_order(make_modify(1, 7, defaultPrice + 20));
@@ -108,8 +93,7 @@ TEST_F(OBModifyOrderTest, ModifyBuyOrderToNewNonCrossingPriceResubmitsAndRests)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice + 20, Side::BUY), 7);
 }
 
-TEST_F(OBModifyOrderTest, ModifySellOrderToNewNonCrossingPriceResubmitsAndRests)
-{
+TEST_F(OBModifyOrderTest, ModifySellOrderToNewNonCrossingPriceResubmitsAndRests) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 4, Side::SELL));
 
     ModificationResult result = ob_.modify_order(make_modify(1, 6, defaultPrice + 15));
@@ -135,8 +119,7 @@ TEST_F(OBModifyOrderTest, ModifySellOrderToNewNonCrossingPriceResubmitsAndRests)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice + 15, Side::SELL), 6);
 }
 
-TEST_F(OBModifyOrderTest, ModifyBuyOrderCanBecomeAggressiveAndFullyFill)
-{
+TEST_F(OBModifyOrderTest, ModifyBuyOrderCanBecomeAggressiveAndFullyFill) {
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 4, Side::SELL, TimeInForce::GTC));
     ob_.submit_limit_order(make_limit_order(1, defaultPrice - 10, 3, Side::BUY, TimeInForce::GTC));
 
@@ -159,8 +142,7 @@ TEST_F(OBModifyOrderTest, ModifyBuyOrderCanBecomeAggressiveAndFullyFill)
     expect_empty_book();
 }
 
-TEST_F(OBModifyOrderTest, ModifySellOrderCanBecomeAggressiveAndFullyFill)
-{
+TEST_F(OBModifyOrderTest, ModifySellOrderCanBecomeAggressiveAndFullyFill) {
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 5, Side::BUY, TimeInForce::GTC));
     ob_.submit_limit_order(make_limit_order(1, defaultPrice + 10, 3, Side::SELL, TimeInForce::GTC));
 
@@ -183,8 +165,7 @@ TEST_F(OBModifyOrderTest, ModifySellOrderCanBecomeAggressiveAndFullyFill)
     expect_empty_book();
 }
 
-TEST_F(OBModifyOrderTest, ModifyBuyOrderCanPartiallyFillThenRestRemainder)
-{
+TEST_F(OBModifyOrderTest, ModifyBuyOrderCanPartiallyFillThenRestRemainder) {
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 2, Side::SELL, TimeInForce::GTC));
     ob_.submit_limit_order(make_limit_order(1, defaultPrice - 10, 3, Side::BUY, TimeInForce::GTC));
 
@@ -213,8 +194,7 @@ TEST_F(OBModifyOrderTest, ModifyBuyOrderCanPartiallyFillThenRestRemainder)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::BUY), 3);
 }
 
-TEST_F(OBModifyOrderTest, ModifySellOrderCanPartiallyFillThenRestRemainder)
-{
+TEST_F(OBModifyOrderTest, ModifySellOrderCanPartiallyFillThenRestRemainder) {
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 2, Side::BUY, TimeInForce::GTC));
     ob_.submit_limit_order(make_limit_order(1, defaultPrice + 10, 4, Side::SELL, TimeInForce::GTC));
 
@@ -243,8 +223,7 @@ TEST_F(OBModifyOrderTest, ModifySellOrderCanPartiallyFillThenRestRemainder)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 4);
 }
 
-TEST_F(OBModifyOrderTest, ModifyPreservesSideWhenResubmitting)
-{
+TEST_F(OBModifyOrderTest, ModifyPreservesSideWhenResubmitting) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 3, Side::BUY));
 
     ModificationResult result = ob_.modify_order(make_modify(1, 6, defaultPrice + 5));
@@ -259,8 +238,7 @@ TEST_F(OBModifyOrderTest, ModifyPreservesSideWhenResubmitting)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice + 5, Side::BUY), 6);
 }
 
-TEST_F(OBModifyOrderTest, ModifyPreservesDayLifetimeForSessionEndPruning)
-{
+TEST_F(OBModifyOrderTest, ModifyPreservesDayLifetimeForSessionEndPruning) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY, TimeInForce::DAY));
 
     ModificationResult result = ob_.modify_order(make_modify(1, 7, defaultPrice + 10));
@@ -277,8 +255,7 @@ TEST_F(OBModifyOrderTest, ModifyPreservesDayLifetimeForSessionEndPruning)
     expect_empty_book();
 }
 
-TEST_F(OBModifyOrderTest, ModifyLosesQueuePriority)
-{
+TEST_F(OBModifyOrderTest, ModifyLosesQueuePriority) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 2, Side::SELL, TimeInForce::GTC));
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 3, Side::SELL, TimeInForce::GTC));
 
@@ -289,13 +266,13 @@ TEST_F(OBModifyOrderTest, ModifyLosesQueuePriority)
 
     SubmissionResult takerResult =
         ob_.submit_limit_order(make_limit_order(3, defaultPrice, 4, Side::BUY, TimeInForce::IOC));
-    
+
     EXPECT_EQ(takerResult.status_, SubmitStatus::FILLED);
     EXPECT_EQ(takerResult.quantityRequested_, 4);
     EXPECT_EQ(takerResult.quantityFilled_, 4);
     EXPECT_EQ(takerResult.get_quantity_remaining(), 0);
     ASSERT_EQ(takerResult.executions_.size(), 2);
-    
+
     EXPECT_EQ(takerResult.executions_[0].makerOrderID_, 2);
     EXPECT_EQ(takerResult.executions_[0].makerPrice_, defaultPrice);
     EXPECT_EQ(takerResult.executions_[0].executedQuantity_, 3);
@@ -310,8 +287,7 @@ TEST_F(OBModifyOrderTest, ModifyLosesQueuePriority)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice, Side::SELL), 1);
 }
 
-TEST_F(OBModifyOrderTest, ModifyPreservesGTCLifetimeThroughSessionEnd)
-{
+TEST_F(OBModifyOrderTest, ModifyPreservesGTCLifetimeThroughSessionEnd) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY, TimeInForce::GTC));
 
     ModificationResult result = ob_.modify_order(make_modify(1, 7, defaultPrice + 10));
@@ -334,8 +310,7 @@ TEST_F(OBModifyOrderTest, ModifyPreservesGTCLifetimeThroughSessionEnd)
     EXPECT_EQ(ob_.get_num_shares_at_level(defaultPrice + 10, Side::BUY), 7);
 }
 
-TEST_F(OBModifyOrderTest, ModifyAfterSessionEndPrunedDayOrderReturnsNotFound)
-{
+TEST_F(OBModifyOrderTest, ModifyAfterSessionEndPrunedDayOrderReturnsNotFound) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 5, Side::BUY, TimeInForce::DAY));
 
     DayOrderPruneResult pruneResult = ob_.on_session_end();
@@ -353,8 +328,7 @@ TEST_F(OBModifyOrderTest, ModifyAfterSessionEndPrunedDayOrderReturnsNotFound)
     expect_empty_book();
 }
 
-TEST_F(OBModifyOrderTest, ModifySamePriceAndSameQuantityStillLosesQueuePriority)
-{
+TEST_F(OBModifyOrderTest, ModifySamePriceAndSameQuantityStillLosesQueuePriority) {
     ob_.submit_limit_order(make_limit_order(1, defaultPrice, 2, Side::SELL, TimeInForce::GTC));
     ob_.submit_limit_order(make_limit_order(2, defaultPrice, 3, Side::SELL, TimeInForce::GTC));
 

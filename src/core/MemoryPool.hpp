@@ -1,18 +1,16 @@
 #pragma once
 
-#include "RestingOrder.hpp"
-
 #include <cstddef>
 #include <new>
 #include <utility>
 #include <vector>
 
-namespace lob::core
-{
+#include "RestingOrder.hpp"
 
-class MemoryPool
-{
-public:
+namespace lob::core {
+
+class MemoryPool {
+  public:
     MemoryPool() = delete;
     explicit MemoryPool(std::size_t size);
 
@@ -21,32 +19,22 @@ public:
     MemoryPool(const MemoryPool&) = delete;
     MemoryPool& operator=(const MemoryPool&) = delete;
 
-    template <typename... Args>
-    RestingOrder* allocate(Args&&... args);
+    template <typename... Args> RestingOrder* allocate(Args&&... args);
 
     void deallocate(RestingOrder* ptr);
 
-    std::size_t get_total_elements() const
-    {
-        return totalElements_;
-    }
+    std::size_t get_total_elements() const { return totalElements_; }
 
-    std::size_t get_currently_allocated() const
-    {
-        return currentlyAllocated_;
-    }
+    std::size_t get_currently_allocated() const { return currentlyAllocated_; }
 
-    std::size_t get_num_slabs() const
-    {
-        return slabs_.size();
-    }
+    std::size_t get_num_slabs() const { return slabs_.size(); }
 
-private:
+  private:
     union MemoryBlock;
 
     MemoryBlock* allocate_slab(std::size_t slabSize);
 
-    std::size_t totalElements_      = 0;
+    std::size_t totalElements_ = 0;
     std::size_t currentlyAllocated_ = 0;
 
     MemoryBlock* firstFree_ = nullptr;
@@ -54,17 +42,13 @@ private:
     std::vector<MemoryBlock*> slabs_;
 };
 
-union MemoryPool::MemoryBlock
-{
+union MemoryPool::MemoryBlock {
     alignas(RestingOrder) std::byte order_[sizeof(RestingOrder)];
     MemoryBlock* next_ = nullptr;
 };
 
-template <typename... Args>
-RestingOrder* MemoryPool::allocate(Args&&... args)
-{
-    if (!firstFree_)
-    {
+template <typename... Args> RestingOrder* MemoryPool::allocate(Args&&... args) {
+    if (!firstFree_) {
         MemoryBlock* newSlab = allocate_slab(totalElements_);
         slabs_.push_back(newSlab);
 
@@ -81,14 +65,12 @@ RestingOrder* MemoryPool::allocate(Args&&... args)
     return new (static_cast<void*>(&ret->order_)) RestingOrder(std::forward<Args>(args)...);
 }
 
-inline MemoryPool::MemoryBlock* MemoryPool::allocate_slab(std::size_t slabSize)
-{
-    MemoryBlock* firstInSlab = static_cast<MemoryBlock*>(::operator new((slabSize * sizeof(MemoryBlock)),
-                                                         std::align_val_t(alignof(RestingOrder))));
+inline MemoryPool::MemoryBlock* MemoryPool::allocate_slab(std::size_t slabSize) {
+    MemoryBlock* firstInSlab = static_cast<MemoryBlock*>(
+        ::operator new((slabSize * sizeof(MemoryBlock)), std::align_val_t(alignof(RestingOrder))));
 
     std::size_t indexOfLastBlock = slabSize - 1;
-    for (std::size_t i{}; i < indexOfLastBlock; i++)
-    {
+    for (std::size_t i{}; i < indexOfLastBlock; i++) {
         firstInSlab[i].next_ = &firstInSlab[i + 1];
     }
 
