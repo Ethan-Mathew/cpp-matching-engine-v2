@@ -2,6 +2,8 @@
 /build
 /build-sanitize
 /build-bench
+/build-latency
+/build-replay
 /.vscode
 /data
 
