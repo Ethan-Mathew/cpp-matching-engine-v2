@@ -2,12 +2,17 @@
 
 This project is organized around several independently buildable features:
 
+- [General Information](#general-information)
 - [Core Limit Order Book Library and Tests](#build-and-run-unit-tests)
 - [Throughput Benchmarks](#build-and-run-throughput-benchmarks)
 - [Latency Benchmarks](#build-and-run-latency-benchmarks)
 - [NASDAQ ITCH 5.0 Replay Tool](#build-and-run-the-nasdaq-itch-50-replay-tool)
 
 All commands below assume they are run from the repository root.
+
+## General Information
+
+This order book implementation uses fixed-point arithmetic instead of decimal numbers for pricing. I use a **multiplier of 10000**, meaning prices have up to **4 points of decimal precision** (e.g. $1.2345 -> 12345). This is important for library and replay usage as all prices, including order book price ranges and order submission requests, will be specified in this manner.
 
 ## Build and Run Unit Tests
 
@@ -100,6 +105,17 @@ To use this tool, the relevant data must be downloaded. The following script to 
 ```
 
 It outputs to a new directory, `data/full/03272019.NASDAQ_ITCH50.bin`
+
+To build the replay tool, use the following commands:
+
+```
+cmake -S . -B build-replay \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DLOB_BUILD_TESTS=OFF \
+  -DLOB_BUILD_REPLAY=ON
+
+cmake --build build-replay -j
+```
 
 ### Replay a Full Trading Day
 
